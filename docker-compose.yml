@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    env_file: .env
+    volumes:
+      - visor_data:/data
+
+  # Carga inicial (una sola vez): importa los documentos y copia sus PDF al volumen.
+  #   docker compose --profile seed run --rm seed
+  seed:
+    build: .
+    profiles: ["seed"]
+    env_file: .env
+    volumes:
+      - visor_data:/data
+      - ./frontend/public:/seed:ro
+    command: ["python", "seed.py", "--docs", "/seed/data/docs.json", "--pdf-dir", "/seed/pdfs", "--data-dir", "/data"]
+
+volumes:
+  visor_data:

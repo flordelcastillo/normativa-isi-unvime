@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/__pycache__
+**/.venv
+backend/data
+backend/static
+frontend/public/pdfs
+frontend/public/data
+docs
+.env
+.local.env
+.git
