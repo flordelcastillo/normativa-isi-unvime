@@ -29,10 +29,27 @@ Cada documento se puede ver por **anexo, órgano emisor y tipo**, con su resumen
 ![Documentos](docs/captura-documentos.png)
 ![Línea de tiempo](docs/captura-linea-de-tiempo.png)
 
+## Convenios
+
+Además de la normativa del digesto, el visor incluye los 285 convenios registrados en [Citrino](http://citrino.unvime.edu.ar/citrino/#/convenios) (se leyeron con el acceso público del propio sistema). Cada convenio tiene sus datos (partes, tipo, firma, vencimiento, expediente), un resumen hecho a partir del PDF escaneado y una sugerencia de **valor para la acreditación de ISI** (alto, medio o bajo) con una frase que explica en qué aspecto podría servir: ámbitos para las PPS, vínculo con el sector productivo, cooperación académica, investigación y transferencia, articulación con el nivel medio.
+
+![Convenios](docs/captura-convenios.png)
+
+La sugerencia es automática y solo ordena la lista: **la decisión de qué entra al informe es de los docentes**. Por defecto se ocultan los 134 convenios sin relación visible con la carrera (salud, clubes, escuelas de otras áreas); se ven con «Todos los convenios».
+
+## Informe en PDF
+
+Cada convenio y cada norma tiene una casilla para agregarlo al informe. En la sección **Informe** se revisa la selección, se escribe una nota por documento (por ejemplo, por qué se incluye) y se descarga un PDF con portada, índice con páginas, una ficha por documento y, si se quiere, los PDF originales completos al final. El PDF se arma en el navegador: no se envía nada a ningún servidor.
+
+![Informe](docs/captura-informe.png)
+
+La selección queda guardada en el navegador de cada persona. Para compartirla entre docentes se puede **guardar en un archivo** y **cargar** en otra computadora.
+
 ## Qué se publica y qué no
 
 El repositorio es público, así que la versión publicada es más acotada que el relevamiento completo:
 
+- De los 285 convenios se publican los datos de todos, y el PDF de los 147 con valor alto o medio que tienen documento cargado. No se publican los nombres de quienes firman por la otra parte. Los convenios escaneados pueden mostrar datos de las personas que los firmaron (por ejemplo, DNI de representantes legales): son los documentos originales tal como figuran en Citrino.
 - Se publican 617 de los 884 documentos relevados. Quedan afuera los que no tienen relación con ISI y los trámites individuales de alumnos (equivalencias y expedición de títulos).
 - Se quitan los números de DNI de todos los textos (resúmenes, personas mencionadas, vigencias).
 - Se aloja el PDF de los anexos 7, 8, 9 y del informe de seguimiento (324 archivos, comprimidos). Para las designaciones, concursos y actividades, el visor enlaza al PDF del [digesto oficial](https://digesto.unvime.edu.ar/digesto/).
