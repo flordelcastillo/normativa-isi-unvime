@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Icon, Menu, Popover, StatusChip, AXVAR } from './ui.jsx';
+import { Icon, Menu, Popover, SelBox, StatusChip, AXVAR } from './ui.jsx';
 import { ANEXO_USO, ESTADOS, MODE_LABEL, NOMBRE_ANEXO, ORG, TIP, cmpDate, emptyFilters, exportCsv, passes } from './lib.js';
 
 const TIPN = { Ordenanza: 'Ordenanzas', Resolución: 'Resoluciones', Acta: 'Actas', Disposición: 'Disposiciones', 'Informe de autoevaluación': 'Informes de autoevaluación', 'Plan de mejora': 'Planes de mejora', Otra: 'Otros documentos' };
 
-function Row({ d, sel, onOpen }) {
+function Row({ d, sel, onOpen, marcado, onMarcar }) {
   return (
     <tr className="doc" aria-selected={sel} data-id={d.id} onClick={() => onOpen(d.id)}>
-      <td><button className="numlink">{d.numero}</button></td>
+      <td className="chk"><SelBox checked={marcado} onChange={onMarcar} label={`Agregar al informe: ${d.numero}`} /></td>
+      <td className="nm"><button className="numlink">{d.numero}</button></td>
       <td className="fe">{d.fecha || 's/f'}</td>
-      <td className="rt"><b>{d.asunto}</b><small>{d.categoria}{d.actividad?.length ? (d.categoria ? ' — ' : '') + d.actividad.slice(0, 2).join(', ') : ''}</small></td>
+      <td className="rt"><b>{d.asunto}</b><small>{d.categoria}{d.actividad?.length ? (d.categoria ? ': ' : '') + d.actividad.slice(0, 2).join(', ') : ''}</small></td>
       <td className="ds">{d.estado.k !== 'vigente' ? <StatusChip k={d.estado.k} /> : null}</td>
     </tr>
   );
@@ -18,7 +19,7 @@ function Row({ d, sel, onOpen }) {
 const numKey = d => { const m = /(\d+)\s*-\s*(\d{4})/.exec(d.numero || ''); return m ? +m[2] * 10000 + +m[1] : 0; };
 const SORTS = { fecha: cmpDate, numero: (a, b) => numKey(a) - numKey(b) || a.numero.localeCompare(b.numero), asunto: (a, b) => a.asunto.localeCompare(b.asunto, 'es'), estado: (a, b) => a.estado.k.localeCompare(b.estado.k) || cmpDate(a, b) };
 
-export default function Documents({ docs, F, setF, years, ui, onOpen }) {
+export default function Documents({ docs, F, setF, years, ui, onOpen, seleccion, notify }) {
   const [closed, setClosed] = useState(() => new Set());
   const [group, setGroup] = useState('organo');
   const [sort, setSort] = useState({ k: 'fecha', dir: 1 });
@@ -34,6 +35,12 @@ export default function Documents({ docs, F, setF, years, ui, onOpen }) {
     const out = []; ORG.forEach(o => TIP.forEach(t => { const items = list.filter(d => d.organo === o && d.tipo === t); if (items.length) out.push({ key: o + '|' + t, title: `${o} · ${TIPN[t]}`, items }); })); return out;
   }, [list, group]);
   const order = useMemo(() => groups.filter(g => !closed.has(g.key)).flatMap(g => g.items), [groups, closed]);
+  const marcadas = list.filter(d => seleccion.tiene('norma', d.id)).length;
+  const todas = list.length > 0 && marcadas === list.length;
+  const alternarTodas = () => {
+    if (todas) seleccion.quitar('norma', list.map(d => d.id));
+    else { seleccion.agregar('norma', list.map(d => d.id)); notify(`Se agregaron ${list.length - marcadas} documentos al informe.`); }
+  };
 
   useEffect(() => {
     const h = e => {
@@ -59,7 +66,7 @@ export default function Documents({ docs, F, setF, years, ui, onOpen }) {
       <div className="dhead">
         <div className="grow">
           <h1>{anexoSel ? NOMBRE_ANEXO[anexoSel] || 'Descartados' : 'Todos los documentos'}</h1>
-          <p className="meta" aria-live="polite"><b>{list.length}</b> {list.length === 1 ? 'documento' : 'documentos'}{F.q ? ` para “${F.q}”` : ''}</p>
+          <p className="meta" aria-live="polite"><b>{list.length}</b> {list.length === 1 ? 'documento' : 'documentos'}{F.q ? ` para “${F.q}”` : ''}{marcadas > 0 && <> · <b>{marcadas}</b> en el informe</>}</p>
         </div>
       </div>
       {anexoSel && ANEXO_USO[anexoSel] && <p className="axnote" style={{ '--ax': AXVAR[anexoSel] }}>{ANEXO_USO[anexoSel]}</p>}
@@ -68,9 +75,9 @@ export default function Documents({ docs, F, setF, years, ui, onOpen }) {
         <Menu label="Órgano emisor" options={ORG.map(o => ({ value: o, label: o, count: cOrg.get(o) || 0 })).filter(o => o.count || F.org.includes(o.value))} value={F.org} onChange={org => set({ org })} />
         <Menu label="Tipo" options={TIP.map(t => ({ value: t, label: TIPN[t], count: cTip.get(t) || 0 })).filter(o => o.count || F.tip.includes(o.value))} value={F.tip} onChange={tip => set({ tip })} />
         <Menu label="Estado" options={Object.entries(ESTADOS).map(([k, l]) => ({ value: k, label: l, count: cEst.get(k) || 0 }))} value={F.est} onChange={est => set({ est })} />
-        <Popover label={F.y0 || F.y1 ? `Años ${F.y0 || '…'}–${F.y1 || '…'}` : 'Años'} active={!!(F.y0 || F.y1)}>
-          <div className="inline"><label className="fld" style={{ margin: 0 }}>Desde<select value={F.y0} onChange={e => set({ y0: e.target.value })}><option value="">—</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
-            <label className="fld" style={{ margin: 0 }}>Hasta<select value={F.y1} onChange={e => set({ y1: e.target.value })}><option value="">—</option>{years.map(y => <option key={y}>{y}</option>)}</select></label></div>
+        <Popover label={F.y0 || F.y1 ? `Años ${F.y0 || '...'} a ${F.y1 || '...'}` : 'Años'} active={!!(F.y0 || F.y1)}>
+          <div className="inline"><label className="fld" style={{ margin: 0 }}>Desde<select value={F.y0} onChange={e => set({ y0: e.target.value })}><option value="">Sin límite</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
+            <label className="fld" style={{ margin: 0 }}>Hasta<select value={F.y1} onChange={e => set({ y1: e.target.value })}><option value="">Sin límite</option>{years.map(y => <option key={y}>{y}</option>)}</select></label></div>
         </Popover>
         <span className="grow" />
         <Menu label="Agrupar por" single right prefix="Agrupar: " value={group} onChange={setGroup} options={[{ value: 'organo', label: 'Órgano y tipo' }, { value: 'fecha', label: 'Fecha' }, { value: 'categoria', label: 'Categoría' }]} />
@@ -86,9 +93,10 @@ export default function Documents({ docs, F, setF, years, ui, onOpen }) {
           <div className="acts">{active.length > 0 && <button className="btn" onClick={() => setF(f => ({ ...emptyFilters(), mode: f.mode }))}>Quitar los filtros</button>}{F.mode === 'directo' && <button className="btn" onClick={() => set({ mode: 'indirecto' })}>Incluir lo indirecto</button>}</div></div>
       )}
       {list.length > 0 && (
-        <table className="reg" style={{ marginTop: active.length ? 10 : 0 }}>
-          <colgroup><col style={{ width: '10.4rem' }} /><col style={{ width: '6.6rem' }} /><col /><col style={{ width: '7.6rem' }} /></colgroup>
+        <table className="reg sel" style={{ marginTop: active.length ? 10 : 0 }}>
+          <colgroup><col style={{ width: '3.4rem' }} /><col style={{ width: '9.2rem' }} /><col style={{ width: '6.6rem' }} /><col /><col style={{ width: '7.6rem' }} /></colgroup>
           <thead><tr>
+            <th scope="col" className="chk"><SelBox checked={todas} onChange={alternarTodas} label={todas ? 'Quitar de la selección todos los documentos de la lista' : 'Agregar al informe todos los documentos de la lista'} /></th>
             {[['numero', 'Número', ''], ['fecha', 'Fecha', ''], ['asunto', 'Asunto', ''], ['estado', 'Estado', '']].map(([k, t]) => (
               <th key={k} scope="col" aria-sort={sort.k === k ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
                 <button onClick={() => setSort(s => (s.k === k ? { k, dir: -s.dir } : { k, dir: 1 }))}>{t}{sort.k === k && <span style={{ transform: sort.dir === 1 ? 'rotate(180deg)' : 'none', display: 'inline-flex' }}><Icon n="chevron" /></span>}</button>
@@ -98,8 +106,8 @@ export default function Documents({ docs, F, setF, years, ui, onOpen }) {
           <tbody>
             {groups.map(g => (
               <React.Fragment key={g.key}>
-                {g.title && <tr className="grp"><td colSpan={4}><button aria-expanded={!closed.has(g.key)} onClick={() => setClosed(s => { const n = new Set(s); n.has(g.key) ? n.delete(g.key) : n.add(g.key); return n; })}><Icon n="chevron" />{g.title}<span className="cnt">{g.items.length}</span></button></td></tr>}
-                {!closed.has(g.key) && g.items.map(d => <Row key={d.id} d={d} sel={ui.sel === d.id} onOpen={onOpen} />)}
+                {g.title && <tr className="grp"><td colSpan={5}><button aria-expanded={!closed.has(g.key)} onClick={() => setClosed(s => { const n = new Set(s); n.has(g.key) ? n.delete(g.key) : n.add(g.key); return n; })}><Icon n="chevron" />{g.title}<span className="cnt">{g.items.length}</span></button></td></tr>}
+                {!closed.has(g.key) && g.items.map(d => <Row key={d.id} d={d} sel={ui.sel === d.id} onOpen={onOpen} marcado={seleccion.tiene('norma', d.id)} onMarcar={() => seleccion.alternar('norma', d.id)} />)}
               </React.Fragment>
             ))}
           </tbody>

@@ -46,6 +46,7 @@ def _sin_dni(m):
 def limpiar(txt):
     if not isinstance(txt, str):
         return txt
+    txt = re.sub(r"\s*—\s*", ", ", txt).replace("–", "-")   # sin guiones largos en los textos publicados
     txt = DNI.sub("", txt)
     txt = DNI_SUELTO.sub("", txt)
     txt = NUM_DNI.sub(_sin_dni, txt)

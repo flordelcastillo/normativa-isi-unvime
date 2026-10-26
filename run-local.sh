@@ -34,7 +34,7 @@ if ! docker volume inspect "$VOL" >/dev/null 2>&1; then
   echo "==> Carga inicial de los documentos y PDFs (una sola vez)…"
   docker volume create "$VOL" >/dev/null
   docker run --rm -v "$VOL":/data -v "$PWD/frontend/public":/seed:ro visor-isi:local \
-    python seed.py --docs /seed/data/docs.json --pdf-dir /seed/pdfs --data-dir /data
+    python seed.py --docs /seed/data/docs.json --pdf-dir /seed/pdfs --data-dir /data --convenios /seed/data/convenios.json --convenio-pdf-dir /seed/pdfs/convenios
 fi
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true

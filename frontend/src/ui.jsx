@@ -25,6 +25,7 @@ const P = {
   chart: <><path d="M5 20V10M12 20V4M19 20v-7" /></>,
   flag: <><path d="M6 21V4" /><path d="M6 5h11l-2 4 2 4H6" /></>,
   users: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 5a3 3 0 0 1 0 6M18 20a5 5 0 0 0-3-4.5" /></>,
+  report: <><path d="M8 4h8a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2Z" /><path d="M9 4v2h6V4" /><path d="M9 11h6M9 15h4" /></>,
   trash: <><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /></>,
 };
 export const Icon = ({ n }) => <svg className="i" viewBox="0 0 24 24" aria-hidden="true">{P[n]}</svg>;
@@ -86,6 +87,16 @@ export function Popover({ label, active, children }) {
       <button type="button" className={`fbtn ${active ? 'on' : ''}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(o => !o)}>{label}<Icon n="chevron" /></button>
       {open && <div className="pop" style={{ padding: 14 }}>{children}</div>}
     </div>
+  );
+}
+
+/* Casilla para sumar un documento o convenio al informe */
+export function SelBox({ checked, onChange, label }) {
+  return (
+    <label className="selbox" onClick={e => e.stopPropagation()} title={checked ? 'Quitar del informe' : 'Agregar al informe'}>
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={label} />
+      <span aria-hidden="true"><Icon n="check" /></span>
+    </label>
   );
 }
 

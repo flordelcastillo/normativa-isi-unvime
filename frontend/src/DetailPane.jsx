@@ -12,7 +12,8 @@ function paras(text) {
   return out;
 }
 
-export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen, onLine, admin, onEdit, onDelete, notify }) {
+export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen, onLine, admin, onEdit, onDelete, notify, seleccion }) {
+  const enInforme = seleccion.tiene('norma', d.id);
   const [copied, setCopied] = useState(false);
   const num = id => byId.get(id)?.numero || '(sin número)';
   const outs = (d.refs || []).filter(r => r.to?.length && relName(r.rel) !== 'cita');
@@ -88,7 +89,8 @@ export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen,
 
             <aside className="dside" aria-label="Datos del documento">
               <div className="ficha">
-                <a className="btn primary" href={d.pdf} target="_blank" rel="noopener noreferrer"><Icon n="external" />{d.externo ? 'Descargar del digesto' : 'Abrir el PDF'}</a>
+                <button className={`btn ${enInforme ? '' : 'primary'}`} aria-pressed={enInforme} onClick={() => seleccion.alternar('norma', d.id)}><Icon n={enInforme ? 'check' : 'plus'} />{enInforme ? 'En el informe (quitar)' : 'Agregar al informe'}</button>
+                <a className="btn" href={d.pdf} target="_blank" rel="noopener noreferrer"><Icon n="external" />{d.externo ? 'Descargar del digesto' : 'Abrir el PDF'}</a>
                 {admin && <div className="adm-row"><button className="btn sm" onClick={() => onEdit(d)}><Icon n="edit" />Editar</button>{d.origen === 'subido' && <button className="btn sm danger" onClick={() => onDelete(d)}><Icon n="trash" />Eliminar</button>}</div>}
                 <dl className="facts">
                   <div><dt>Fecha</dt><dd>{fmtFecha(d)}</dd></div>

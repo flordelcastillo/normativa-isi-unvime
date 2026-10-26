@@ -23,6 +23,7 @@ const leer = async ruta => { const r = await fetch(ruta); if (!r.ok) throw new E
 export const api = {
   meta: () => (ESTATICO ? leer('data/meta.json') : call('/api/meta')),
   docs: () => (ESTATICO ? leer('data/docs.json') : call('/api/docs')),
+  convenios: () => (ESTATICO ? leer('data/convenios.json') : call('/api/convenios')),
   login: password => call('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }) }),
   ocr: file => { const f = new FormData(); f.append('file', file); return call('/api/ocr-preview', { method: 'POST', body: f }); },
   create: (meta, file) => { const f = new FormData(); f.append('meta', JSON.stringify(meta)); f.append('file', file); return call('/api/docs', { method: 'POST', body: f }); },

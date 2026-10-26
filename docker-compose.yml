@@ -17,7 +17,7 @@ services:
     volumes:
       - visor_data:/data
       - ./frontend/public:/seed:ro
-    command: ["python", "seed.py", "--docs", "/seed/data/docs.json", "--pdf-dir", "/seed/pdfs", "--data-dir", "/data"]
+    command: ["python", "seed.py", "--docs", "/seed/data/docs.json", "--pdf-dir", "/seed/pdfs", "--data-dir", "/data", "--convenios", "/seed/data/convenios.json", "--convenio-pdf-dir", "/seed/pdfs/convenios"]
 
 volumes:
   visor_data:

@@ -102,4 +102,39 @@ export function exportCsv(list, name = 'documentos-isi.csv') {
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
 
-export const SIDE_NAME = { 'Anexo 7': 'Anexo 7 · Normativa', 'Anexo 8': 'Anexo 8 · Programas y PPS', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos' };
+/* ---- convenios (Citrino) ---- */
+export const VALOR = { alta: 'Alto', media: 'Medio', baja: 'Bajo' };
+export const VALOR_AYUDA = {
+  alta: 'Se relaciona de forma directa con la carrera: prácticas, empresas del sector, investigación o articulación académica en informática.',
+  media: 'Puede servir como evidencia general de vinculación (cooperación institucional, extensión, ingreso).',
+  baja: 'No se ve relación con la carrera. Solo se muestra si elegís ver todos los convenios.',
+};
+export const MODOS_CONV = { sugeridos: 'Con posible valor para ISI', todos: 'Todos los convenios' };
+export const ESTADOS_CONV = ['Vigente', 'Vencido'];
+
+export function preprocessConvenios(lista) {
+  return lista.map(c => ({ ...c, hay: norm([c.numero, (c.partes || []).map(p => p.nombre).join(' '), c.objeto, c.resumen, c.aporte, c.categoria, c.expediente, c.tipo, c.firmante_ext].join(' ')) }));
+}
+export const emptyConv = () => ({ modo: 'sugeridos', cat: [], tipo: [], estado: [], parte: [], valor: [], y0: '', y1: '' });
+export function passesConv(c, F, CF, skip = {}) {
+  if (!skip.modo && CF.modo === 'sugeridos' && c.relevancia === 'baja') return false;
+  if (!skip.cat && CF.cat.length && !CF.cat.includes(c.categoria)) return false;
+  if (!skip.tipo && CF.tipo.length && !CF.tipo.includes(c.tipo)) return false;
+  if (!skip.estado && CF.estado.length && !CF.estado.includes(c.estado)) return false;
+  if (!skip.parte && CF.parte.length && !(c.partes || []).some(p => CF.parte.includes(p.tipo))) return false;
+  if (!skip.valor && CF.valor.length && !CF.valor.includes(c.relevancia)) return false;
+  if (CF.y0 && (!c.anio || c.anio < +CF.y0)) return false;
+  if (CF.y1 && (!c.anio || c.anio > +CF.y1)) return false;
+  if (F.q) { const t = norm(F.q).split(/\s+/).filter(Boolean); if (!t.every(x => c.hay.includes(x))) return false; }
+  return true;
+}
+export function exportConveniosCsv(list, name = 'convenios-isi.csv') {
+  const cols = [['Número', c => c.numero], ['Partes', c => (c.partes || []).map(p => p.nombre).join('; ')], ['Tipo', c => c.tipo], ['Estado', c => c.estado], ['Firma', c => c.firma], ['Vencimiento', c => c.vence],
+    ['Categoría', c => c.categoria], ['Valor sugerido para ISI', c => VALOR[c.relevancia]], ['Objeto', c => c.objeto], ['Resumen', c => c.resumen], ['Posible aporte a la acreditación', c => c.aporte], ['Expediente', c => c.expediente]];
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const csv = '﻿' + [cols.map(c => q(c[0])).join(','), ...list.map(c => cols.map(k => q(k[1](c))).join(','))].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+export const SIDE_NAME ={ 'Anexo 7': 'Anexo 7 · Normativa', 'Anexo 8': 'Anexo 8 · Programas y PPS', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos' };
