@@ -1,4 +1,4 @@
-/* Normativa ISI — hoja de estilos.
+/* Normativa ISI: hoja de estilos.
    Criterio: registro oficial. Bordes finos en lugar de cajas con sombra, tipografía con jerarquía,
    color solo donde significa algo (estado del documento y anexo). */
 
@@ -319,6 +319,53 @@ details.more-d summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
 .helpgrid h3 { font-family: var(--f-ui); font-size: 16px; font-weight: 600; margin-bottom: 2px; }
 .pop, .dbody, .modal-bg, .split-detail { overscroll-behavior: contain; }
 
+/* ============ Selección para el informe ============ */
+.selbox { position: relative; display: inline-grid; place-items: center; width: 34px; height: 34px; cursor: pointer; }
+.selbox input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.selbox span { width: 18px; height: 18px; display: grid; place-items: center; border: 1.5px solid var(--line-2); border-radius: 3px; background: var(--surface); color: transparent; }
+.selbox:hover span { border-color: var(--ink-3); }
+.selbox input:checked + span { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.selbox input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
+.selbox .i, .reg thead th .selbox .i { width: 13px; height: 13px; stroke-width: 2.8; color: inherit; }
+.reg.sel td.chk, .reg.sel th.chk { padding: 0 0 0 clamp(8px, 1.6vw, 22px) !important; text-align: left; vertical-align: top; }
+.reg.sel tbody tr.doc td.chk { padding-top: 3px !important; }
+.reg.sel td.nm { padding-left: 4px !important; }
+.reg .thp { display: inline-block; padding: 8px 12px; }
+.valor { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.valor .dot { width: 7px; height: 7px; color: var(--ink-3); }
+.valor.v-alta .dot { color: var(--ok); } .valor.v-media .dot { color: var(--warn); }
+.s-vencido, .s-vencido .dot { color: var(--ink-3); }
+.tail-note { padding: 14px clamp(16px, 2.4vw, 32px) 40px; color: var(--ink-3); font-size: 14px; }
+.dh h2.cv { font-size: 26px; line-height: 1.22; }
+.informe-btn .badge { min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--brand); color: var(--on-brand); font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
+
+.ph1 { font-size: 30px; }
+.lead-p { margin-top: 8px; max-width: 68ch; color: var(--ink-2); }
+.empty.left { margin: 22px 0 0; max-width: 560px; padding: 0; text-align: left; }
+.empty.left .acts { justify-content: flex-start; }
+.inf-box { margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--rule); display: grid; gap: 16px; }
+.inf-box h2, .inf-sec h2 { font-size: 21px; }
+.inf-grid { display: grid; gap: 0 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.inf-grid .fld { margin: 0; }
+.chk-line { display: flex; gap: 10px; align-items: flex-start; max-width: 70ch; }
+.chk-line input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--brand); flex: none; }
+.chk-line small { display: block; color: var(--ink-3); font-size: 13.5px; margin-top: 1px; }
+.inf-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.inf-status { min-height: 1.5em; color: var(--ink-2); font-size: 14.5px; }
+.inf-sec { margin-top: 34px; }
+.inf-sec h2 { padding-bottom: 8px; border-bottom: 1px solid var(--line-2); }
+.sel-list { list-style: none; margin: 0; padding: 0; }
+.sel-item { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.si-head { display: flex; gap: 14px; align-items: flex-start; }
+.si-t { flex: 1; display: grid; gap: 2px; min-width: 0; justify-items: start; }
+.si-num { font: 700 16px var(--f-serif); }
+.si-name { font-weight: 500; }
+.si-t small { color: var(--ink-3); font-size: 13.5px; }
+.si-head .valor { padding-top: 4px; }
+.si-nota { display: grid; gap: 4px; margin-top: 8px; font-size: 13px; color: var(--ink-3); max-width: 80ch; }
+.si-nota textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--surface); font-size: 14.5px; resize: vertical; }
+.si-nota textarea:hover { border-color: var(--ink-3); }
+
 /* ============ Responsivo ============ */
 @media (max-width: 1000px) {
   :root { --side: 0px; }
@@ -336,7 +383,11 @@ details.more-d summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
   .topbar { position: static; height: auto; flex-wrap: wrap; row-gap: 8px; padding: 8px 12px; }
   .topsearch { order: 3; flex-basis: 100%; max-width: none; }
   .toolbar, .yearmark { top: 0; } .reg thead { display: none; }
-  .topsearch kbd, .topactions .btn.sm:not(.primary) { display: none; }
+  .topsearch kbd, .topactions .btn.sm:not(.primary):not(.informe-btn) { display: none; }
+  .reg.sel tbody tr.doc { position: relative; padding-left: 52px; }
+  .reg.sel tbody tr.doc td.chk { position: absolute; left: 8px; top: 6px; padding: 0 !important; }
+  .reg.sel tbody tr.doc td.nm { padding-left: 0 !important; }
+  .reg td[data-l]::before { content: attr(data-l) ': '; color: var(--ink-3); }
   .reg, .reg tbody, .reg tr.doc, .reg tr.doc td { display: block; }
   .reg tbody tr.doc { padding: 9px clamp(16px, 2.4vw, 32px); border-bottom: 1px solid var(--line); }
   .reg tbody tr.doc td { padding: 0 !important; border: 0; }
