@@ -3,6 +3,7 @@ from pathlib import Path
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "./data")).resolve()
 PDF_DIR = DATA_DIR / "pdfs"
+CONVENIOS_DIR = DATA_DIR / "convenios"
 DB_PATH = DATA_DIR / "visor.db"
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", Path(__file__).resolve().parent.parent / "static"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")          # vacío = modo solo lectura

@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from . import auth, config, db, ocr
 
-app = FastAPI(title="Visor de normativa ISI – UNViMe", version="1.0")
+app = FastAPI(title="Visor de normativa ISI, UNViMe", version="1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
@@ -110,6 +110,32 @@ def pdf(doc_id: str):
     p = _pdf_path(doc_id)
     if not p.exists():
         raise HTTPException(404, "El PDF no está en el servidor.")
+    return FileResponse(p, media_type="application/pdf", headers={"Content-Disposition": "inline", "Cache-Control": "private, max-age=3600"})
+
+
+# Convenios de Citrino: solo lectura. Los carga seed.py en DATA_DIR/convenios/.
+def _convenios() -> dict:
+    p = config.CONVENIOS_DIR / "convenios.json"
+    if not p.exists():
+        return {"convenios": [], "categorias": []}
+    data = json.loads(p.read_text(encoding="utf-8"))
+    for c in data["convenios"]:
+        c["pdf"] = f"/api/convenios/{c['id']}/pdf" if c.get("pdf") else ""
+    return data
+
+
+@app.get("/api/convenios")
+def list_convenios():
+    return _convenios()
+
+
+@app.get("/api/convenios/{conv_id}/pdf")
+def convenio_pdf(conv_id: str):
+    if not re.fullmatch(r"c\d{1,6}", conv_id):
+        raise HTTPException(404)
+    p = config.CONVENIOS_DIR / "pdfs" / f"{conv_id}.pdf"
+    if not p.exists():
+        raise HTTPException(404, "El PDF de este convenio no está en el servidor.")
     return FileResponse(p, media_type="application/pdf", headers={"Content-Disposition": "inline", "Cache-Control": "private, max-age=3600"})
 
 
