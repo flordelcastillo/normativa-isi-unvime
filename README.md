@@ -63,9 +63,9 @@ La selección queda guardada en el navegador de cada persona. Para compartirla e
 El repositorio es público, así que la versión publicada es más acotada que el relevamiento completo:
 
 - De los 285 convenios se publican los datos de todos, y el PDF de los 150 con valor alto o medio, o que respaldan un anexo, y tienen documento cargado. No se publican los nombres de quienes firman por la otra parte. Los convenios escaneados pueden mostrar datos de las personas que los firmaron (por ejemplo, DNI de representantes legales): son los documentos originales tal como figuran en Citrino.
-- Se publican 744 de los 998 documentos relevados. Quedan afuera los que no tienen relación con ISI y los trámites individuales de alumnos (equivalencias y expedición de títulos).
+- Se publican 773 de los 1.024 documentos relevados. Quedan afuera los que no tienen relación con ISI y los trámites individuales de alumnos (equivalencias y expedición de títulos).
 - Se quitan los números de DNI de todos los textos (resúmenes, personas mencionadas, vigencias).
-- Se aloja el PDF de los anexos 1, 2, 4, 5, 6, 7, 8, 9 y del informe de seguimiento (452 archivos, comprimidos). Para las designaciones, concursos y actividades, el visor enlaza al PDF del [digesto oficial](https://digesto.unvime.edu.ar/digesto/).
+- Se aloja el PDF de los anexos 1, 2, 4, 5, 6, 7, 8, 9 y del informe de seguimiento (481 archivos, comprimidos). Para las designaciones, concursos y actividades, el visor enlaza al PDF del [digesto oficial](https://digesto.unvime.edu.ar/digesto/).
 - Los PDF que sí se alojan son los originales de la universidad: pueden contener datos de personas que ya son públicos en el digesto.
 
 Los criterios están al comienzo de [`scripts/export_static.py`](scripts/export_static.py) y se pueden cambiar.
