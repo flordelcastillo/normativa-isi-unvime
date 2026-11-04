@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Icon } from './ui.jsx';
 import { Valor } from './Convenios.jsx';
+import { NOMBRE_ANEXO, ORDEN_ANEXOS } from './lib.js';
 
 const TITULO_BASE = 'Documentación para la acreditación de Ingeniería en Sistemas de Información';
 const LIMITE_ADJUNTOS = 60;
@@ -12,11 +13,15 @@ export default function Informe({ seleccion, byId, convById, onOpen, go, notify 
   const [aviso, setAviso] = useState('');
   const archivo = useRef(null);
 
-  const resueltos = sel.items.map(i => ({ ...i, d: i.tipo === 'convenio' ? convById.get(i.id) : byId.get(i.id) }));
+  const SIN_ANEXO = 'Convenios sin anexo asignado';
+  const opcionesAnexo = (tipo, d) => { const l = tipo === 'convenio' ? (d.anexos || []) : d.anexos.map(a => a.anexo); return l.length ? l : (tipo === 'convenio' ? [SIN_ANEXO] : []); };
+  const resueltos = sel.items.map(i => { const d = i.tipo === 'convenio' ? convById.get(i.id) : byId.get(i.id); const ops = d ? opcionesAnexo(i.tipo, d) : []; return { ...i, d, opciones: ops, anexoEf: ops.includes(i.anexo) ? i.anexo : ops[0] || SIN_ANEXO }; });
   const validos = resueltos.filter(i => i.d);
   const perdidos = resueltos.length - validos.length;
   const convenios = validos.filter(i => i.tipo === 'convenio');
   const normas = validos.filter(i => i.tipo === 'norma');
+  const orden = [...ORDEN_ANEXOS, 'Descartar', SIN_ANEXO];
+  const grupos = orden.map(a => [a, validos.filter(i => i.anexoEf === a)]).filter(([, l]) => l.length);
   const adjuntables = validos.filter(i => !i.d.externo && i.d.pdf).length;
   const titulo = sel.titulo.trim() || TITULO_BASE;
 
@@ -56,7 +61,7 @@ export default function Informe({ seleccion, byId, convById, onOpen, go, notify 
         <div className="si-t">
           <button className="linkish si-num" onClick={() => onOpen(i.tipo, i.id)}>{i.d.numero}</button>
           <span className="si-name">{i.tipo === 'convenio' ? i.d.partes.map(p => p.nombre).join('; ') : i.d.asunto}</span>
-          <small>{i.tipo === 'convenio' ? `${i.d.tipo} · firmado ${i.d.firma || 's/f'} · ${i.d.estado}` : `${i.d.anexo} · ${i.d.organo} · ${i.d.fecha || 's/f'}`}</small>
+          <small>{i.tipo === 'convenio' ? `${i.d.tipo} · firmado ${i.d.firma || 's/f'} · ${i.d.estado}` : `${i.d.organo} · ${i.d.fecha || 's/f'}${(i.d.anexos.find(a => a.anexo === i.anexoEf) || {}).categoria ? ' · ' + i.d.anexos.find(a => a.anexo === i.anexoEf).categoria : ''}`}</small>
         </div>
         {i.tipo === 'convenio' && <Valor k={i.d.relevancia} />}
         <button className="iconbtn" onClick={() => seleccion.quitar(i.tipo, [i.id])} aria-label={`Quitar del informe: ${i.d.numero}`} title="Quitar del informe"><Icon n="trash" /></button>
@@ -108,8 +113,7 @@ export default function Informe({ seleccion, byId, convById, onOpen, go, notify 
         {perdidos > 0 && <p className="note">{perdidos} {perdidos === 1 ? 'elemento de la selección ya no existe' : 'elementos de la selección ya no existen'} en el visor y {perdidos === 1 ? 'no se incluye' : 'no se incluyen'}.</p>}
       </section>
 
-      {convenios.length > 0 && <section className="inf-sec"><h2>Convenios <span className="muted">({convenios.length})</span></h2><ul className="sel-list">{convenios.map(fila)}</ul></section>}
-      {normas.length > 0 && <section className="inf-sec"><h2>Normativa del digesto <span className="muted">({normas.length})</span></h2><ul className="sel-list">{normas.map(fila)}</ul></section>}
+      {grupos.map(([anexo, lista]) => <section className="inf-sec" key={anexo}><h2>{NOMBRE_ANEXO[anexo] || anexo} <span className="muted">({lista.length})</span></h2><ul className="sel-list">{lista.map(fila)}</ul></section>)}
     </div>
   );
 }

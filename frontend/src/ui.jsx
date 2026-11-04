@@ -33,7 +33,7 @@ export const Icon = ({ n }) => <svg className="i" viewBox="0 0 24 24" aria-hidde
 export const StatusChip = ({ k }) => <span className={`status s-${k}`} title={ESTADO_AYUDA[k]}><i className="dot" aria-hidden="true" />{ESTADOS[k]}</span>;
 
 export const AXICON = { 'Anexo 7': 'scale', 'Anexo 8': 'book', 'Anexo 9': 'rocket', 'Anexo 10': 'chart', 'Informe de seguimiento': 'flag', 'Otros': 'users', 'Descartar': 'ban' };
-export const AXVAR = { 'Anexo 7': 'var(--a7)', 'Anexo 8': 'var(--a8)', 'Anexo 9': 'var(--a9)', 'Anexo 10': 'var(--a10)', 'Informe de seguimiento': 'var(--a-seg)', 'Otros': 'var(--a-otros)', 'Descartar': 'var(--line-2)' };
+export const AXVAR = { 'Anexo 1': 'var(--a1)', 'Anexo 2': 'var(--a2)', 'Anexo 3': 'var(--a3)', 'Anexo 4': 'var(--a4)', 'Anexo 5': 'var(--a5)', 'Anexo 6': 'var(--a6)', 'Anexo 7': 'var(--a7)', 'Anexo 8': 'var(--a8)', 'Anexo 9': 'var(--a9)', 'Anexo 10': 'var(--a10)', 'Informe de seguimiento': 'var(--a-seg)', 'Otros': 'var(--a-otros)', 'Descartar': 'var(--line-2)' };
 export const AnexoMark = ({ a }) => <span className="sw" style={{ '--ax': AXVAR[a] }} aria-hidden="true" />;
 
 /* Selector desplegable con casillas (multi) o opciones únicas (single) */

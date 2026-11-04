@@ -12,7 +12,7 @@ function paras(text) {
   return out;
 }
 
-export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen, onLine, admin, onEdit, onDelete, notify, seleccion }) {
+export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen, onLine, admin, onEdit, onDelete, notify, seleccion, anexoActual }) {
   const enInforme = seleccion.tiene('norma', d.id);
   const [copied, setCopied] = useState(false);
   const num = id => byId.get(id)?.numero || '(sin número)';
@@ -28,7 +28,7 @@ export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen,
     <div className="detail" role="region" aria-label={`Detalle de ${d.numero}`}>
       <header className="dh">
         <div className="dh-top">
-          <span className="kicker" ><AnexoMark a={d.anexo} />{d.anexo === 'Descartar' ? 'Descartado' : d.anexo}{d.categoria ? <><span>›</span><span>{d.categoria}</span></> : null}</span>
+          <span className="kicker"><AnexoMark a={d.anexo} />{d.anexo === 'Descartar' ? 'Descartado' : d.anexo}{d.categoria ? <><span>›</span><span>{d.categoria}</span></> : null}{d.extra?.length > 0 && <span className="more-ax">{`+ ${d.extra.map(x => x.anexo).join(', ')}`}</span>}</span>
           <span className="dh-actions">
             <button className="iconbtn" onClick={copy} aria-label="Copiar enlace a este documento" title="Copiar enlace"><Icon n={copied ? 'check' : 'link'} /></button>
             <button className="iconbtn" onClick={onClose} aria-label="Cerrar el detalle" title="Cerrar (Esc)"><Icon n="close" /></button>
@@ -89,15 +89,14 @@ export default function DetailPane({ d, byId, lines, ui, setUi, onClose, onOpen,
 
             <aside className="dside" aria-label="Datos del documento">
               <div className="ficha">
-                <button className={`btn ${enInforme ? '' : 'primary'}`} aria-pressed={enInforme} onClick={() => seleccion.alternar('norma', d.id)}><Icon n={enInforme ? 'check' : 'plus'} />{enInforme ? 'En el informe (quitar)' : 'Agregar al informe'}</button>
+                <button className={`btn ${enInforme ? '' : 'primary'}`} aria-pressed={enInforme} onClick={() => seleccion.alternar('norma', d.id, anexoActual && d.anexos.some(a => a.anexo === anexoActual) ? anexoActual : undefined)}><Icon n={enInforme ? 'check' : 'plus'} />{enInforme ? 'En el informe (quitar)' : 'Agregar al informe'}</button>
                 <a className="btn" href={d.pdf} target="_blank" rel="noopener noreferrer"><Icon n="external" />{d.externo ? 'Descargar del digesto' : 'Abrir el PDF'}</a>
                 {admin && <div className="adm-row"><button className="btn sm" onClick={() => onEdit(d)}><Icon n="edit" />Editar</button>{d.origen === 'subido' && <button className="btn sm danger" onClick={() => onDelete(d)}><Icon n="trash" />Eliminar</button>}</div>}
                 <dl className="facts">
                   <div><dt>Fecha</dt><dd>{fmtFecha(d)}</dd></div>
                   <div><dt>Órgano emisor</dt><dd>{d.organo}</dd></div>
                   <div><dt>Tipo</dt><dd>{d.tipo}</dd></div>
-                  <div className="x-wide"><dt>Anexo</dt><dd><AnexoMark a={d.anexo} />{d.anexo === 'Descartar' ? 'Descartado' : d.anexo}</dd></div>
-                  {d.categoria && <div className="x-wide"><dt>Categoría</dt><dd>{d.categoria}</dd></div>}
+                  {d.anexos.map(a => <div className="x-wide" key={a.anexo}><dt>{a.anexo}</dt><dd><AnexoMark a={a.anexo} />{a.categoria || (a.anexo === 'Otros' ? 'Otros documentos' : '')}</dd></div>)}
                   <div className="x-wide"><dt>Archivo</dt><dd className="fname">{d.archivo}</dd></div>
                 </dl>
                 {d.lineas?.length > 0 && <div className="lines-in x-wide"><h4>Línea de tiempo</h4>{d.lineas.map(k => lines.find(l => l.key === k)).filter(Boolean).map(l => <button key={l.key} className="linkish" onClick={() => onLine(l.key)}>{l.nombre}</button>)}</div>}

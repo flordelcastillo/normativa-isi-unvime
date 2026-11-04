@@ -20,6 +20,7 @@ export default function Convenios({ convenios, categorias, F, CF, setCF, years, 
   const set = p => setCF(f => ({ ...f, ...p }));
   const list = useMemo(() => convenios.filter(c => passesConv(c, F, CF)).sort((a, b) => SORTS[sort.k](a, b) * sort.dir || a.numero.localeCompare(b.numero)), [convenios, F, CF, sort]);
   const count = (key, skip) => { const m = new Map(); convenios.forEach(c => { if (passesConv(c, F, CF, skip)) m.set(key(c), (m.get(key(c)) || 0) + 1); }); return m; };
+  const cAnexo = (() => { const m = new Map(); convenios.forEach(c => { if (passesConv(c, F, CF, { anexo: 1 })) (c.anexos || []).forEach(a => m.set(a, (m.get(a) || 0) + 1)); }); return m; })();
   const cCat = count(c => c.categoria, { cat: 1 }), cTipo = count(c => c.tipo, { tipo: 1 }), cEst = count(c => c.estado, { estado: 1 }), cVal = count(c => c.relevancia, { valor: 1 });
   const cParte = useMemo(() => { const m = new Map(); convenios.filter(c => passesConv(c, F, CF, { parte: 1 })).forEach(c => new Set((c.partes || []).map(p => p.tipo)).forEach(t => m.set(t, (m.get(t) || 0) + 1))); return m; }, [convenios, F, CF]);
 
@@ -34,11 +35,12 @@ export default function Convenios({ convenios, categorias, F, CF, setCF, years, 
   const todas = list.length > 0 && marcadas === list.length;
   const alternarTodas = () => {
     if (todas) seleccion.quitar('convenio', list.map(c => c.id));
-    else { seleccion.agregar('convenio', list.map(c => c.id)); notify(`Se agregaron ${list.length - marcadas} convenios al informe.`); }
+    else { seleccion.agregar('convenio', list.map(c => c.id), CF.anexo.length === 1 ? CF.anexo[0] : undefined); notify(`Se agregaron ${list.length - marcadas} convenios al informe.`); }
   };
 
   const active = [];
   if (F.q) active.push([`Búsqueda “${F.q}”`, null]);
+  CF.anexo.forEach(a => active.push([a === 'Anexo 3' ? 'Anexo 3 (específicos vigentes)' : a === 'Anexo 5' ? 'Anexo 5 (becas)' : a === 'Anexo 6' ? 'Anexo 6 (inmuebles)' : a, () => set({ anexo: CF.anexo.filter(x => x !== a) })]));
   CF.cat.forEach(c => active.push([c, () => set({ cat: CF.cat.filter(x => x !== c) })]));
   CF.tipo.forEach(t => active.push([`Convenio ${t.toLowerCase()}`, () => set({ tipo: CF.tipo.filter(x => x !== t) })]));
   CF.estado.forEach(e => active.push([e, () => set({ estado: CF.estado.filter(x => x !== e) })]));
@@ -53,12 +55,13 @@ export default function Convenios({ convenios, categorias, F, CF, setCF, years, 
     <>
       <div className="dhead">
         <div className="grow">
-          <h1>Convenios</h1>
+          <h1>{CF.anexo.length === 1 && CF.anexo[0] === 'Anexo 3' ? 'Anexo 3 · Convenios específicos vigentes' : 'Convenios'}</h1>
           <p className="meta" aria-live="polite"><b>{list.length}</b> {list.length === 1 ? 'convenio' : 'convenios'}{F.q ? ` para “${F.q}”` : ''}{marcadas > 0 && <> · <b>{marcadas}</b> en el informe</>}</p>
         </div>
       </div>
       <p className="axnote" style={{ '--ax': 'var(--a8)' }}>Convenios de la UNViMe registrados en Citrino. La columna «Valor» es una sugerencia automática según el texto de cada convenio: los docentes deciden cuáles entran al informe.</p>
       <div className="toolbar" role="group" aria-label="Filtros de convenios">
+        <Menu label="Anexo" options={[['Anexo 3', 'Anexo 3 · Convenios específicos vigentes'], ['Anexo 5', 'Anexo 5 · Becas'], ['Anexo 6', 'Anexo 6 · Respaldo de inmuebles']].map(([value, label]) => ({ value, label, count: cAnexo.get(value) || 0 }))} value={CF.anexo} onChange={anexo => set({ anexo })} wide />
         <Menu label="Categoría" options={categorias.map(x => ({ value: x.nombre, label: x.nombre, count: cCat.get(x.nombre) || 0 })).filter(o => o.count || CF.cat.includes(o.value))} value={CF.cat} onChange={cat => set({ cat })} wide />
         <Menu label="Tipo" options={[...new Set(convenios.map(c => c.tipo))].filter(Boolean).map(t => ({ value: t, label: t, count: cTipo.get(t) || 0 })).filter(o => o.count || CF.tipo.includes(o.value))} value={CF.tipo} onChange={tipo => set({ tipo })} />
         <Menu label="Estado" options={ESTADOS_CONV.map(e => ({ value: e, label: e, count: cEst.get(e) || 0 }))} value={CF.estado} onChange={estado => set({ estado })} />
@@ -100,7 +103,7 @@ export default function Convenios({ convenios, categorias, F, CF, setCF, years, 
                 {g.title && <tr className="grp"><td colSpan={6}><button aria-expanded={!closed.has(g.key)} onClick={() => setClosed(s => { const n = new Set(s); if (n.has(g.key)) n.delete(g.key); else n.add(g.key); return n; })}><Icon n="chevron" />{g.title}<span className="cnt">{g.items.length}</span></button></td></tr>}
                 {!closed.has(g.key) && g.items.map(c => (
                   <tr key={c.id} className="doc" aria-selected={ui.sel === c.id} data-id={c.id} onClick={() => onOpen(c.id)}>
-                    <td className="chk"><SelBox checked={seleccion.tiene('convenio', c.id)} onChange={() => seleccion.alternar('convenio', c.id)} label={`Agregar al informe: ${partesTxt(c)}`} /></td>
+                    <td className="chk"><SelBox checked={seleccion.tiene('convenio', c.id)} onChange={() => seleccion.alternar('convenio', c.id, CF.anexo.length === 1 && (c.anexos || []).includes(CF.anexo[0]) ? CF.anexo[0] : undefined)} label={`Agregar al informe: ${partesTxt(c)}`} /></td>
                     <td className="rt"><b>{partesTxt(c)}</b><small>{c.tipo} · {c.numero}</small></td>
                     <td className="fe" data-l="Firma">{c.firma || 's/f'}</td>
                     <td className="fe" data-l="Vence">{c.vence || (c.renovacion === 'Permanente' ? 'Permanente' : 's/f')}</td>

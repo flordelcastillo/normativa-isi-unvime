@@ -10,6 +10,7 @@
   --line: #dcdfe4; --line-2: #c3c8d0; --rule: #15202b;
   --brand: #1f3a68; --brand-ink: #162b4f; --brand-wash: #e9edf4; --on-brand: #ffffff;
   --ok: #17694f; --warn: #8a5a00; --bad: #a8261c;
+  --a1: #44546a; --a2: #2f6b3a; --a3: #8a6d00; --a4: #3d6f9e; --a5: #6f7f1a; --a6: #7b4f2e;
   --a7: #1f3a68; --a8: #6b3c8c; --a9: #9a4a0a; --a10: #0e6573; --a-seg: #8c2150; --a-otros: #66707c;
   --f-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-serif: 'Newsreader Variable', 'Newsreader', Georgia, 'Times New Roman', serif;
@@ -24,6 +25,7 @@
     --line: #232e3b; --line-2: #36445a; --rule: #e9edf2;
     --brand: #9db8e6; --brand-ink: #c2d3f0; --brand-wash: #18222f; --on-brand: #0c1117;
     --ok: #5fc9a4; --warn: #efb957; --bad: #ff8f84;
+    --a1: #a9b8cc; --a2: #7fc68e; --a3: #e2c25a; --a4: #8fb8e0; --a5: #c3d36a; --a6: #d3a87e;
     --a7: #9db8e6; --a8: #c9a2ea; --a9: #efa760; --a10: #62cde0; --a-seg: #ef92b6; --a-otros: #9aa6b4;
     --shadow-pop: 0 8px 28px rgba(0, 0, 0, .6);
   }
@@ -398,3 +400,8 @@ details.more-d summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
   .tlpick { margin-left: 0; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* Anexos adicionales en la ficha y selector de anexo en el informe */
+.kicker .more-ax { color: var(--ink-3); margin-left: 4px; }
+.si-anexo { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-3); }
+.si-anexo select { max-width: 100%; min-height: 32px; padding: 3px 8px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 14px; }

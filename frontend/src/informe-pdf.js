@@ -9,6 +9,13 @@ const TINTA = [0.12, 0.23, 0.41];
 const NEGRO = [0.1, 0.1, 0.12];
 const LINEA = [0.82, 0.83, 0.86];
 
+const ORDEN = ['Anexo 1', 'Anexo 2', 'Anexo 3', 'Anexo 4', 'Anexo 5', 'Anexo 6', 'Anexo 7', 'Anexo 8', 'Anexo 9', 'Anexo 10', 'Informe de seguimiento', 'Otros'];
+const NOMBRES = {
+  'Anexo 1': 'Anexo 1. Estatuto de la Universidad', 'Anexo 2': 'Anexo 2. Normativa institucional de apoyo a la carrera', 'Anexo 3': 'Anexo 3. Convenios específicos vigentes',
+  'Anexo 4': 'Anexo 4. Requisitos de admisión', 'Anexo 5': 'Anexo 5. Programas de becas', 'Anexo 6': 'Anexo 6. Inmuebles, seguridad e higiene y SIED',
+  'Anexo 7': 'Anexo 7. Normativa de la carrera', 'Anexo 8': 'Anexo 8. Programas, TP, PPS y trabajos finales', 'Anexo 9': 'Anexo 9. Planes de mejora',
+  'Anexo 10': 'Anexo 10. Resultados y seguimiento', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos',
+};
 const REEMPLAZOS = [[/[–—−]/g, '-'], [/→/g, 'a'], [/[   ]/g, ' '], [/\t/g, ' '], [/№/g, 'Nº'], [/[​-‍﻿]/g, '']];
 
 export async function generarInforme({ titulo, autores, items, adjuntar, onProgreso }) {
@@ -72,6 +79,7 @@ export async function generarInforme({ titulo, autores, items, adjuntar, onProgr
   const total = items.length;
   const nConv = items.filter(i => i.tipo === 'convenio').length;
   const nNorm = total - nConv;
+  const nSec = new Set(items.map(i => i.anexoEf)).size;
   nueva();
   y = A4[1] - 200;
   page.drawRectangle({ x: M.l, y: y + 8, width: 46, height: 3, color: col(TINTA) });
@@ -82,15 +90,13 @@ export async function generarInforme({ titulo, autores, items, adjuntar, onProgr
   const partes = [];
   if (nConv) partes.push(`${nConv} ${nConv === 1 ? 'convenio' : 'convenios'}`);
   if (nNorm) partes.push(`${nNorm} ${nNorm === 1 ? 'norma' : 'normas'} del digesto`);
-  texto(`Documentación seleccionada para la acreditación: ${partes.join(' y ')}.`, { font: serif, size: 13, lead: 18, despues: 6 });
+  texto(`Documentación seleccionada para la acreditación: ${partes.join(' y ')}, organizada en ${nSec} ${nSec === 1 ? 'sección' : 'secciones'} por anexo.`, { font: serif, size: 13, lead: 18, despues: 6 });
   if (autores) texto(`Selección realizada por: ${autores}`, { font: serif, size: 12, color: GRIS, despues: 4 });
   texto(`Generado el ${new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })} desde el visor de normativa de ISI.`, { font: serif, size: 11, color: GRIS });
 
   // ---- índice reservado (se completa al final, cuando se conocen las páginas) ----
-  const secciones = [
-    { titulo: 'Convenios', lista: items.filter(i => i.tipo === 'convenio') },
-    { titulo: 'Normativa del digesto', lista: items.filter(i => i.tipo === 'norma') },
-  ].filter(s => s.lista.length);
+  const orden = [...ORDEN, 'Convenios sin anexo asignado'];
+  const secciones = orden.map(a => ({ titulo: NOMBRES[a] || a, anexo: a, lista: items.filter(i => i.anexoEf === a) })).filter(sec => sec.lista.length);
   const filasIndice = secciones.reduce((n, s) => n + s.lista.length + 1, 0) + (adjuntar ? items.length + 1 : 0);
   const paginasIndice = Math.max(1, Math.ceil(filasIndice / 38));
   const reservadas = [];
@@ -113,7 +119,7 @@ export async function generarInforme({ titulo, autores, items, adjuntar, onProgr
       if (d.objeto) texto(`Objeto registrado: ${d.objeto}`, { font: serifI, size: 10.2, color: GRIS, despues: 5 });
     } else {
       texto(d.asunto, { font: serifB, size: 11, lead: 14.5, despues: 2 });
-      texto([dato('Anexo', d.anexo), dato('Categoría', d.categoria), dato('Órgano', d.organo), dato('Tipo', d.tipo), dato('Fecha', d.fecha), dato('Estado', d.estado?.t)].filter(Boolean).join('   |   '),
+      texto([dato('Categoría', (d.anexos?.find(a => a.anexo === i.anexoEf) || {}).categoria || d.categoria), dato('Órgano', d.organo), dato('Tipo', d.tipo), dato('Fecha', d.fecha), dato('Estado', d.estado?.t)].filter(Boolean).join('   |   '),
         { font: sans, size: 8.6, color: GRIS, lead: 12, despues: 6 });
     }
     if (d.resumen) texto(d.resumen, { despues: 5 });
