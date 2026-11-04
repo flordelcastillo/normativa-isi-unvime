@@ -31,6 +31,9 @@ CATEGORIAS = [
     ("Otras instituciones", "Salud, deportes, cultura, gremios y otras organizaciones."),
 ]
 NOMBRES_CAT = {n for n, _ in CATEGORIAS}
+# Convenios que respaldan la disponibilidad de inmuebles (anexo 6). Revisados a mano a partir del objeto y el resumen.
+ANEXO_6 = {"c162", "c163", "c199", "c233", "c319"}
+TIPOS_ESPECIFICOS = {"Específico", "Acuerdo Complementario", "Programa"}
 OBS_UTIL = re.compile(r"marco|específico|especifico|complementario|renov|prórroga|prorroga|addenda|vigencia", re.I)
 DNI = re.compile(r"\bD\.?N\.?I\.?\b[^,;.]{0,20}\d[\d.]{6,}|\b\d{1,2}\.\d{3}\.\d{3}\b", re.I)
 
@@ -80,8 +83,15 @@ def main():
         assert k["relevancia"] in ("alta", "media", "baja"), (cid, k["relevancia"])
         iso = c["firma"] or ""
         vence = c["vence"] or ""
-        estado = "Vencido" if c["estado"] == "Vencido" else "Vigente"
-        con_pdf = bool(c["ruta"]) and k["relevancia"] != "baja"
+        estado = "Vencido" if c["estado"] == "Vencido" else "Vigente"   # "Por Vencer" cuenta como vigente
+        anexos = []
+        if c["tipo"] in TIPOS_ESPECIFICOS and estado == "Vigente" and k["relevancia"] != "baja":
+            anexos.append("Anexo 3")
+        if estado == "Vigente" and re.search(r"\bbecas?\b", c["objeto"] or "", re.I):
+            anexos.append("Anexo 5")
+        if cid in ANEXO_6:
+            anexos.append("Anexo 6")
+        con_pdf = bool(c["ruta"]) and (k["relevancia"] != "baja" or bool(anexos))
         obs = c["obs"] if c["obs"] and OBS_UTIL.search(c["obs"]) and not re.search(r"firm", c["obs"], re.I) else ""
         convenios.append({
             "id": cid, "numero": c["resolucion"].strip() if c["resolucion"] and re.search(r"\d", c["resolucion"]) else f"Sin número ({fecha(iso) or 's/f'})",
@@ -89,7 +99,7 @@ def main():
             "tipo": c["tipo"], "estado": estado, "objeto": c["objeto"] or "", "responsable": c["responsable"] or "", "firmante": c["firmante"] or "",
             "firma": fecha(iso), "iso": iso, "anio": int(iso[:4]) if iso else None, "vence": fecha(vence), "vence_iso": vence,
             "renovacion": c["renov_modo"] or "", "renov_tipo": c["renov_tipo"] or "", "expediente": c["expediente"] or "", "obs": DNI.sub("", obs).strip(),
-            "categoria": k["categoria"], "relevancia": k["relevancia"], "menciona_isi": bool(k.get("menciona_isi")),
+            "anexos": anexos, "categoria": k["categoria"], "relevancia": k["relevancia"], "menciona_isi": bool(k.get("menciona_isi")),
             "resumen": DNI.sub("", k.get("resumen", "")).strip(), "aporte": DNI.sub("", k.get("aporte", "")).strip(), "calidad": k.get("calidad", ""),
             "pdf": f"pdfs/convenios/{cid}.pdf" if con_pdf else "", "_ruta": c["ruta"] if con_pdf else "",
         })
@@ -102,6 +112,7 @@ def main():
         "categorias": [{"nombre": n, "desc": d} for n, d in CATEGORIAS], "convenios": publico}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     cnt = {r: sum(1 for c in convenios if c["relevancia"] == r) for r in ("alta", "media", "baja")}
+    print("Anexo 3:", sum("Anexo 3" in c["anexos"] for c in convenios), "| Anexo 5:", sum("Anexo 5" in c["anexos"] for c in convenios), "| Anexo 6:", sum("Anexo 6" in c["anexos"] for c in convenios))
     print(f"Convenios: {len(convenios)} (alta {cnt['alta']}, media {cnt['media']}, baja {cnt['baja']}); con PDF alojado: {sum(1 for c in convenios if c['pdf'])}")
     if a.solo_datos:
         return

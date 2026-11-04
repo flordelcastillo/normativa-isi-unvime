@@ -39,7 +39,7 @@ export default function Documents({ docs, F, setF, years, ui, onOpen, seleccion,
   const todas = list.length > 0 && marcadas === list.length;
   const alternarTodas = () => {
     if (todas) seleccion.quitar('norma', list.map(d => d.id));
-    else { seleccion.agregar('norma', list.map(d => d.id)); notify(`Se agregaron ${list.length - marcadas} documentos al informe.`); }
+    else { seleccion.agregar('norma', list.map(d => d.id), anexoSel); notify(`Se agregaron ${list.length - marcadas} documentos al informe.`); }
   };
 
   useEffect(() => {
@@ -58,8 +58,9 @@ export default function Documents({ docs, F, setF, years, ui, onOpen, seleccion,
   F.tip.forEach(t => active.push([TIPN[t], () => set({ tip: F.tip.filter(x => x !== t) })]));
   F.est.forEach(e => active.push([ESTADOS[e], () => set({ est: F.est.filter(x => x !== e) })]));
   if (F.y0 || F.y1) active.push([`Años: ${F.y0 || '…'} a ${F.y1 || '…'}`, () => set({ y0: '', y1: '' })]);
-  const catOpts = [...new Set(docs.filter(d => !anexoSel || d.anexo === anexoSel).map(d => d.anexo + '|' + d.categoria))].filter(k => k.split('|')[1])
-    .map(k => ({ value: k, label: (anexoSel ? '' : k.split('|')[0].replace('Anexo ', 'A') + ' · ') + k.split('|')[1], count: docs.filter(d => d.anexo + '|' + d.categoria === k && passes(d, F, { cat: 1 })).length })).filter(o => o.count || F.cat.includes(o.value)).sort((a, b) => b.count - a.count);
+  const keys = [...new Set(docs.flatMap(d => d.anexos.filter(a => !anexoSel || a.anexo === anexoSel).map(a => a.anexo + '|' + a.categoria)))].filter(k => k.split('|')[1]);
+  const catOpts = keys.map(k => ({ value: k, label: (anexoSel ? '' : k.split('|')[0].replace('Anexo ', 'A') + ' · ') + k.split('|')[1], count: docs.filter(d => d.anexos.some(a => a.anexo + '|' + a.categoria === k) && passes(d, F, { cat: 1 })).length }))
+    .filter(o => o.count || F.cat.includes(o.value)).sort((a, b) => b.count - a.count);
 
   return (
     <>
@@ -107,7 +108,7 @@ export default function Documents({ docs, F, setF, years, ui, onOpen, seleccion,
             {groups.map(g => (
               <React.Fragment key={g.key}>
                 {g.title && <tr className="grp"><td colSpan={5}><button aria-expanded={!closed.has(g.key)} onClick={() => setClosed(s => { const n = new Set(s); n.has(g.key) ? n.delete(g.key) : n.add(g.key); return n; })}><Icon n="chevron" />{g.title}<span className="cnt">{g.items.length}</span></button></td></tr>}
-                {!closed.has(g.key) && g.items.map(d => <Row key={d.id} d={d} sel={ui.sel === d.id} onOpen={onOpen} marcado={seleccion.tiene('norma', d.id)} onMarcar={() => seleccion.alternar('norma', d.id)} />)}
+                {!closed.has(g.key) && g.items.map(d => <Row key={d.id} d={d} sel={ui.sel === d.id} onOpen={onOpen} marcado={seleccion.tiene('norma', d.id)} onMarcar={() => seleccion.alternar('norma', d.id, anexoSel && d.anexos.some(a => a.anexo === anexoSel) ? anexoSel : undefined)} />)}
               </React.Fragment>
             ))}
           </tbody>

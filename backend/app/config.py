@@ -12,12 +12,18 @@ TOKEN_TTL_SECONDS = int(os.environ.get("TOKEN_TTL_SECONDS", 8 * 3600))
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", 60))
 TESSDATA_LANG = os.environ.get("OCR_LANG", "spa")
 
-ANEXOS = ["Anexo 7", "Anexo 8", "Anexo 9", "Anexo 10", "Informe de seguimiento", "Otros", "Descartar"]
+ANEXOS = ["Anexo 1", "Anexo 2", "Anexo 4", "Anexo 5", "Anexo 6", "Anexo 7", "Anexo 8", "Anexo 9", "Anexo 10", "Informe de seguimiento", "Otros", "Descartar"]
 ORGANOS = ["Rectoral", "Consejo Superior", "Consejo Académico", "Consejo Directivo", "Consejo Departamental", "Decanal", "Otra"]
 TIPOS = ["Ordenanza", "Resolución", "Acta", "Disposición", "Informe de autoevaluación", "Plan de mejora", "Otra"]
 RELEVANCIAS = ["alta", "media", "nula"]
 
 CATEGORIAS = {
+    "Anexo 1": ["Estatuto de la Universidad"],
+    "Anexo 2": ["Funciones y responsabilidades de las instancias de gobierno", "Comisiones de planificación y seguimiento de la carrera", "Selección, designación y permanencia de docentes",
+                "Ingreso y permanencia de los alumnos", "Subsidios para investigación", "Apoyo a la formación de posgrado de los docentes", "Ingreso y promoción del personal de apoyo"],
+    "Anexo 4": ["Régimen y requisitos de admisión", "Cursos y ciclos de ingreso o nivelación"],
+    "Anexo 5": ["Programas y reglamentos de becas", "Convocatorias y bases de becas"],
+    "Anexo 6": ["Disponibilidad de inmuebles", "Seguridad e higiene", "Sistema Institucional de Educación a Distancia (SIED)"],
     "Anexo 7": ["Estructura de gestión", "Instancias de diseño y seguimiento del plan de estudios", "Normativa de creación de la carrera",
                 "Resoluciones ministeriales / reconocimiento y validez del título", "Plan de estudios y sus modificaciones",
                 "Actividades curriculares optativas", "Modalidad y requisitos de la PPS", "Condiciones de regularidad",

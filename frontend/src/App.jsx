@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, getToken, setToken } from './api.js';
-import { SIDE_NAME, emptyConv, emptyFilters, passes, passesConv, preprocess, preprocessConvenios } from './lib.js';
+import { ANEXOS_CARRERA, ANEXOS_UA, SIDE_NAME, emptyConv, emptyFilters, passes, passesConv, preprocess, preprocessConvenios } from './lib.js';
 import { AXVAR, Icon } from './ui.jsx';
 import { useSeleccion } from './seleccion.js';
 import Home from './Home.jsx';
@@ -14,7 +14,6 @@ import LoginDialog from './LoginDialog.jsx';
 import DocForm from './DocForm.jsx';
 
 const TABS = [['inicio', 'Inicio'], ['documentos', 'Documentos'], ['lineas', 'Líneas de tiempo'], ['convenios', 'Convenios'], ['informe', 'Informe']];
-const ANEXOS = ['Anexo 7', 'Anexo 8', 'Anexo 9', 'Anexo 10', 'Informe de seguimiento', 'Otros'];
 
 function fromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
@@ -91,17 +90,26 @@ export default function App() {
 
   const detail = sel && (
     <aside className="split-detail"><DetailPane d={sel} byId={byId} lines={meta.lines} ui={ui} setUi={setUi} onClose={() => setUi({ sel: null })} onOpen={open}
-      onLine={k => go('lineas', { line: k })} admin={admin} onEdit={d => needAdmin(() => setDlg({ form: 'edit', doc: d }))} onDelete={del} notify={notify} seleccion={seleccion} /></aside>
+      onLine={k => go('lineas', { line: k })} admin={admin} onEdit={d => needAdmin(() => setDlg({ form: 'edit', doc: d }))} onDelete={del} notify={notify} seleccion={seleccion} anexoActual={F.ax.length === 1 ? F.ax[0] : null} /></aside>
   );
   const detailConv = selConv && (
     <aside className="split-detail"><ConvenioDetail c={selConv} ui={ui} setUi={setUi} onClose={() => setUi({ sel: null })} seleccion={seleccion} notify={notify} /></aside>
   );
   const nSel = seleccion.sel.items.length;
-  const convSugeridos = convenios.filter(c => passesConv(c, F, CF)).length;
+  const convSugeridos = convenios.filter(c => passesConv(c, F, { ...CF, anexo: [] })).length;
 
-  const axCount = Object.fromEntries(ANEXOS.map(x => [x, docs.filter(d => d.anexo === x && passes(d, F, { ax: 1, cat: 1, org: 1, tip: 1, est: 1 })).length]));
-  const total = ANEXOS.reduce((s2, x) => s2 + axCount[x], 0);
-  const goAnexo = x => { setF(f => ({ ...f, ax: x ? [x] : [], cat: [] })); setUi({ tab: 'documentos', sel: null }); window.scrollTo(0, 0); };
+  const base = { ax: 1, cat: 1, org: 1, tip: 1, est: 1 };
+  const modoDe = x => (ANEXOS_UA.includes(x) ? 'indirecto' : F.mode);
+  const axCount = Object.fromEntries([...ANEXOS_UA, ...ANEXOS_CARRERA].map(x => [x, docs.filter(d => d.anexos.some(a => a.anexo === x) && passes(d, { ...F, mode: modoDe(x) }, base)).length]));
+  axCount['Anexo 3'] = convenios.filter(c => (c.anexos || []).includes('Anexo 3')).length;
+  const total = docs.filter(d => passes(d, F, base)).length;
+  const goAnexo = x => {
+    if (x === 'Anexo 3') { setCF(f => ({ ...emptyConv(), modo: 'todos', anexo: ['Anexo 3'] })); setUi({ tab: 'convenios', sel: null }); window.scrollTo(0, 0); return; }
+    setF(f => ({ ...f, ax: x ? [x] : [], cat: [], mode: x && ANEXOS_UA.includes(x) ? 'indirecto' : 'directo' })); setUi({ tab: 'documentos', sel: null }); window.scrollTo(0, 0);
+  };
+  const itemAnexo = x => (
+    <button key={x} className="sitem" aria-current={x === 'Anexo 3' ? (ui.tab === 'convenios' && CF.anexo.includes('Anexo 3') ? 'page' : undefined) : (ui.tab === 'documentos' && F.ax[0] === x ? 'page' : undefined)} onClick={() => goAnexo(x)} style={{ '--tab': AXVAR[x] }}>{SIDE_NAME[x]}<span className="n">{axCount[x]}</span></button>
+  );
 
   return (
     <>
@@ -123,17 +131,19 @@ export default function App() {
           <h2>Explorar</h2>
           <button className="sitem" aria-current={ui.tab === 'inicio' ? 'page' : undefined} onClick={() => go('inicio')}>Inicio</button>
           <button className="sitem" aria-current={ui.tab === 'lineas' ? 'page' : undefined} onClick={() => go('lineas')}>Líneas de tiempo</button>
-          <h2>Documentos por anexo</h2>
-          <button className="sitem" aria-current={ui.tab === 'documentos' && !F.ax.length ? 'page' : undefined} onClick={() => goAnexo(null)}>Todos<span className="n">{total}</span></button>
-          {ANEXOS.map(x => <button key={x} className="sitem" aria-current={ui.tab === 'documentos' && F.ax[0] === x ? 'page' : undefined} onClick={() => goAnexo(x)} style={{ '--tab': AXVAR[x] }}>{SIDE_NAME[x]}<span className="n">{axCount[x]}</span></button>)}
-          <h2>Vinculación</h2>
-          <button className="sitem" aria-current={ui.tab === 'convenios' ? 'page' : undefined} onClick={() => go('convenios')} style={{ '--tab': 'var(--a8)' }}>Convenios<span className="n">{convSugeridos}</span></button>
+          <h2>Unidad académica (anexos 1 a 6)</h2>
+          {ANEXOS_UA.map(itemAnexo)}
+          <h2>Carrera (anexos 7 a 10)</h2>
+          {ANEXOS_CARRERA.map(itemAnexo)}
+          <h2>Todo el material</h2>
+          <button className="sitem" aria-current={ui.tab === 'documentos' && !F.ax.length ? 'page' : undefined} onClick={() => goAnexo(null)}>Todos los documentos<span className="n">{total}</span></button>
+          <button className="sitem" aria-current={ui.tab === 'convenios' && !CF.anexo.length ? 'page' : undefined} onClick={() => { setCF(f => ({ ...f, anexo: [] })); go('convenios'); }} style={{ '--tab': 'var(--a3)' }}>Todos los convenios<span className="n">{convSugeridos}</span></button>
           <h2>Para entregar</h2>
           <button className="sitem" aria-current={ui.tab === 'informe' ? 'page' : undefined} onClick={() => go('informe')}>Informe en PDF<span className="n">{nSel}</span></button>
-          <p className="foot">{docs.length} documentos del digesto relevados el 15/10/2026 y {convenios.length} convenios de Citrino relevados el {convRaw?.relevado || '26/10/2026'}. Fuentes: <a href="https://digesto.unvime.edu.ar/digesto/" target="_blank" rel="noopener noreferrer">digesto</a> y <a href="http://citrino.unvime.edu.ar/citrino/#/convenios" target="_blank" rel="noopener noreferrer">Citrino</a>.</p>
+          <p className="foot">{docs.length} documentos del digesto relevados hasta el 04/11/2026 y {convenios.length} convenios de Citrino relevados el {convRaw?.relevado || '04/11/2026'}. Fuentes: <a href="https://digesto.unvime.edu.ar/digesto/" target="_blank" rel="noopener noreferrer">digesto</a> y <a href="http://citrino.unvime.edu.ar/citrino/#/convenios" target="_blank" rel="noopener noreferrer">Citrino</a>.</p>
         </nav>
         <main id="main" className="content">
-          {ui.tab === 'inicio' && <Home docs={docs} F={F} go={go} onOpen={open} />}
+          {ui.tab === 'inicio' && <Home docs={docs} convenios={convenios} F={F} go={go} goAnexo={goAnexo} onOpen={open} />}
           {ui.tab === 'documentos' && <div className={`split ${sel ? 'has-detail' : ''}`}><div className="split-main"><Documents docs={docs} F={F} setF={setF} years={years} ui={ui} onOpen={open} seleccion={seleccion} notify={notify} /></div>{detail}</div>}
           {ui.tab === 'convenios' && <div className={`split ${selConv ? 'has-detail' : ''}`}><div className="split-main"><Convenios convenios={convenios} categorias={convRaw?.categorias || []} F={F} CF={CF} setCF={setCF} years={convYears} ui={ui} onOpen={open} seleccion={seleccion} notify={notify} /></div>{detailConv}</div>}
           {ui.tab === 'informe' && <Informe seleccion={seleccion} byId={byId} convById={convById} onOpen={abrirDeInforme} go={go} notify={notify} />}

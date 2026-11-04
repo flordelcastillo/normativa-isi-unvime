@@ -8,17 +8,30 @@ Visor de la normativa de la carrera **Ingeniería en Sistemas de Información** 
 
 ## Para qué sirve
 
-El digesto de la UNViMe tiene más de 13.000 resoluciones y ordenanzas escaneadas, con un buscador que sirve poco. Este proyecto leyó con OCR las que podían corresponder a la carrera, se quedó con las relevantes y las ordenó según los anexos que pide la CONEAU:
+El digesto de la UNViMe tiene más de 13.000 resoluciones y ordenanzas escaneadas, con un buscador que sirve poco. Este proyecto leyó con OCR las que podían servir a la acreditación, se quedó con las relevantes y las ordenó según los anexos del formulario de la CONEAU. Un mismo documento puede figurar en más de un anexo (por ejemplo, un reglamento de ingreso sirve al anexo 4 y al 7).
 
-| Anexo | Qué reúne | Documentos |
-|---|---|---|
-| 7 | Normativa de la carrera: gestión, plan de estudios, PPS, regularidad, ingreso, apoyo académico | 267 |
-| 8 | Programas, trabajos prácticos, informes de PPS y trabajos finales | 30 |
-| 9 | Respaldo de planes y estrategias de mejora | 26 |
-| Informe de seguimiento | Compromisos asumidos en una acreditación anterior | 1 |
-| Otros | Designaciones, concursos y actividades de la Escuela | 293 |
+**Unidad académica (anexos 1 a 6)**
 
-El Anexo 10 (análisis de resultados e informes de seguimiento) queda vacío: el digesto no publica esos informes, hay que buscarlos fuera de él.
+| Anexo | Qué reúne |
+|---|---|
+| 1 | Estatuto de la Universidad: el vigente, el Estatuto Provisorio y sus reformas |
+| 2 | Normativa institucional: instancias de gobierno, comisiones de carrera, selección y permanencia de docentes, ingreso y permanencia de alumnos, subsidios de investigación, posgrado docente, personal de apoyo |
+| 3 | Convenios específicos vigentes vinculados con la carrera (del registro de Citrino) |
+| 4 | Requisitos de admisión y programas de ingreso |
+| 5 | Programas y reglamentos de becas (no incluye pagos ni adjudicaciones a personas) |
+| 6 | Respaldo de inmuebles (comodatos, locaciones, cesiones), seguridad e higiene y normas del SIED |
+
+**Carrera (anexos 7 a 10)**
+
+| Anexo | Qué reúne |
+|---|---|
+| 7 | Normativa de la carrera: gestión, plan de estudios, PPS, regularidad, ingreso, apoyo académico |
+| 8 | Programas, trabajos prácticos, informes de PPS y trabajos finales |
+| 9 | Respaldo de planes y estrategias de mejora |
+| Informe de seguimiento | Compromisos asumidos en una acreditación anterior |
+| Otros | Designaciones, concursos y actividades de la Escuela |
+
+El Anexo 10 (análisis de resultados e informes de seguimiento) queda vacío: el digesto no publica esos informes, hay que buscarlos fuera de él. La resolución ministerial o de la CONEAU que valida el SIED no está en el digesto: figuran la creación y el reglamento del SIED de la UNViMe (RR 183-2019 y RR 458-2019), pero la validación hay que sumarla aparte.
 
 Cada documento se puede ver por **anexo, órgano emisor y tipo**, con su resumen y el PDF. Además:
 
@@ -49,10 +62,10 @@ La selección queda guardada en el navegador de cada persona. Para compartirla e
 
 El repositorio es público, así que la versión publicada es más acotada que el relevamiento completo:
 
-- De los 285 convenios se publican los datos de todos, y el PDF de los 147 con valor alto o medio que tienen documento cargado. No se publican los nombres de quienes firman por la otra parte. Los convenios escaneados pueden mostrar datos de las personas que los firmaron (por ejemplo, DNI de representantes legales): son los documentos originales tal como figuran en Citrino.
-- Se publican 617 de los 884 documentos relevados. Quedan afuera los que no tienen relación con ISI y los trámites individuales de alumnos (equivalencias y expedición de títulos).
+- De los 285 convenios se publican los datos de todos, y el PDF de los 150 con valor alto o medio, o que respaldan un anexo, y tienen documento cargado. No se publican los nombres de quienes firman por la otra parte. Los convenios escaneados pueden mostrar datos de las personas que los firmaron (por ejemplo, DNI de representantes legales): son los documentos originales tal como figuran en Citrino.
+- Se publican 744 de los 998 documentos relevados. Quedan afuera los que no tienen relación con ISI y los trámites individuales de alumnos (equivalencias y expedición de títulos).
 - Se quitan los números de DNI de todos los textos (resúmenes, personas mencionadas, vigencias).
-- Se aloja el PDF de los anexos 7, 8, 9 y del informe de seguimiento (324 archivos, comprimidos). Para las designaciones, concursos y actividades, el visor enlaza al PDF del [digesto oficial](https://digesto.unvime.edu.ar/digesto/).
+- Se aloja el PDF de los anexos 1, 2, 4, 5, 6, 7, 8, 9 y del informe de seguimiento (452 archivos, comprimidos). Para las designaciones, concursos y actividades, el visor enlaza al PDF del [digesto oficial](https://digesto.unvime.edu.ar/digesto/).
 - Los PDF que sí se alojan son los originales de la universidad: pueden contener datos de personas que ya son públicos en el digesto.
 
 Los criterios están al comienzo de [`scripts/export_static.py`](scripts/export_static.py) y se pueden cambiar.
@@ -112,7 +125,8 @@ La clasificación de cada documento (relevancia, anexo, categoría, línea de ti
 El relevamiento completo (con los documentos que no se publican) no está en este repositorio. Con él:
 
 ```bash
-python3 scripts/export_static.py --source RUTA/data.js --pdfs RUTA/pdfs --out frontend/public
+python3 scripts/merge_anexos_ua.py --base RUTA --out RUTA/relevamiento_completo.json
+python3 scripts/export_static.py --source RUTA/relevamiento_completo.json --pdfs RUTA/visor-isi/pdfs,RUTA/pdf_cache --out frontend/public
 git add frontend/public && git commit -m "Actualiza el relevamiento" && git push
 ```
 

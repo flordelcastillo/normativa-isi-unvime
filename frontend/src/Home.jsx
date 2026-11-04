@@ -1,9 +1,8 @@
 import React from 'react';
 import { DocLink, Icon, AXVAR } from './ui.jsx';
-import { ANEXO_USO, NOMBRE_ANEXO, cmpDate, passes } from './lib.js';
+import { ANEXOS_CARRERA, ANEXOS_UA, ANEXO_USO, NOMBRE_ANEXO, cmpDate, passes } from './lib.js';
 
 const SUGERENCIAS = ['comisión de carrera', 'plan de estudios', 'práctica profesional', 'equivalencias', 'coordinador', 'RR 51-2018'];
-const ANEXOS = ['Anexo 7', 'Anexo 8', 'Anexo 9', 'Anexo 10', 'Informe de seguimiento', 'Otros'];
 const BLOQUES = [['comision_carrera_ISI', 'Comisión de Carrera', true], ['coordinacion_ISI', 'Coordinación de la carrera'], ['plan_estudios_ISI', 'Plan de estudios'], ['autoevaluacion_acreditacion', 'Autoevaluación y acreditación']];
 
 function Chain({ items, onOpen, animate }) {
@@ -21,7 +20,7 @@ function Chain({ items, onOpen, animate }) {
   );
 }
 
-export default function Home({ docs, F, go, onOpen }) {
+export default function Home({ docs, convenios, F, go, goAnexo, onOpen }) {
   const chainOf = key => docs.filter(d => (d.lineas || []).includes(key) && d.relevancia === 'alta').sort(cmpDate);
   const direct = docs.filter(d => d.relevancia === 'alta');
   return (
@@ -37,33 +36,37 @@ export default function Home({ docs, F, go, onOpen }) {
         <p className="try">Por ejemplo: {SUGERENCIAS.map((s, i) => <React.Fragment key={s}>{i > 0 && ', '}<button className="linkish" onClick={() => go('documentos', {}, s)}>{s}</button></React.Fragment>)}.</p>
       </section>
 
-      <section className="sec" aria-labelledby="h-anexos">
-        <h2 id="h-anexos">Índice por anexo</h2>
-        <p className="sub">Cada anexo reúne los documentos que pide la acreditación; dentro de él, se agrupan por órgano emisor y tipo.</p>
-        <ol className="indice">
-          {ANEXOS.map(a => {
-            const list = docs.filter(d => d.anexo === a && passes(d, { ...F, q: '' }, { ax: 1, cat: 1, org: 1, tip: 1, est: 1 }));
-            const orgs = [...new Set(list.map(d => d.organo))].map(o => [o, list.filter(d => d.organo === o).length]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([o, n]) => `${o} ${n}`);
-            const inner = (
-              <>
-                <span className="tab" aria-hidden="true" />
-                <span>
-                  <span className="top"><span className="ititle">{NOMBRE_ANEXO[a]}</span><span className="ileader" aria-hidden="true" /><span className="icount">{list.length}</span></span>
-                  <p>{ANEXO_USO[a]}</p>
-                  <span className="orgs">{list.length ? orgs.join(', ') : 'El digesto no tiene documentos para este anexo; hay que buscarlos fuera del digesto.'}</span>
-                </span>
-              </>
-            );
-            return (
-              <li key={a}>
-                {list.length
-                  ? <a href={`#t=documentos&a=${encodeURIComponent(a)}`} className="ientry" style={{ '--ax': AXVAR[a] }} onClick={e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; e.preventDefault(); go('documentos', { ax: [a] }); }}>{inner}</a>
-                  : <div className="ientry zero" style={{ '--ax': AXVAR[a] }}>{inner}</div>}
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+      {[['h-ua', 'Unidad académica: anexos 1 a 6', 'Documentación de la Escuela de Ingeniería y Ciencias Ambientales y de la Universidad que respalda el funcionamiento de la carrera.', ANEXOS_UA],
+        ['h-anexos', 'Carrera: anexos 7 a 10', 'Cada anexo reúne los documentos que pide la acreditación; dentro de él, se agrupan por órgano emisor y tipo.', ANEXOS_CARRERA]].map(([hid, titulo, sub, lista]) => (
+        <section className="sec" aria-labelledby={hid} key={hid}>
+          <h2 id={hid}>{titulo}</h2>
+          <p className="sub">{sub}</p>
+          <ol className="indice">
+            {lista.map(a => {
+              const esConv = a === 'Anexo 3';
+              const list = esConv ? convenios.filter(c => (c.anexos || []).includes('Anexo 3')) : docs.filter(d => d.anexos.some(x => x.anexo === a) && passes(d, { ...F, q: '', mode: lista === ANEXOS_UA ? 'indirecto' : F.mode }, { ax: 1, cat: 1, org: 1, tip: 1, est: 1 }));
+              const orgs = esConv ? ['registro de Citrino'] : [...new Set(list.map(d => d.organo))].map(o => [o, list.filter(d => d.organo === o).length]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([o, n]) => `${o} ${n}`);
+              const inner = (
+                <>
+                  <span className="tab" aria-hidden="true" />
+                  <span>
+                    <span className="top"><span className="ititle">{NOMBRE_ANEXO[a]}</span><span className="ileader" aria-hidden="true" /><span className="icount">{list.length}</span></span>
+                    <p>{ANEXO_USO[a]}</p>
+                    <span className="orgs">{list.length ? orgs.join(', ') : 'El digesto no tiene documentos para este anexo; hay que buscarlos fuera del digesto.'}</span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={a}>
+                  {list.length
+                    ? <a href={esConv ? '#t=convenios' : `#t=documentos&a=${encodeURIComponent(a)}`} className="ientry" style={{ '--ax': AXVAR[a] }} onClick={e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; e.preventDefault(); goAnexo(a); }}>{inner}</a>
+                    : <div className="ientry zero" style={{ '--ax': AXVAR[a] }}>{inner}</div>}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
 
       <section className="sec" aria-labelledby="h-chain">
         <h2 id="h-chain">Cómo cambiaron las instancias de la carrera</h2>

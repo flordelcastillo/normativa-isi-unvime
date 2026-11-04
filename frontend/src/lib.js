@@ -1,6 +1,16 @@
-export const AX = ['Anexo 7', 'Anexo 8', 'Anexo 9', 'Anexo 10', 'Informe de seguimiento', 'Otros', 'Descartar'];
+/* Anexos de la unidad académica (1 a 6) y de la carrera (7 a 10), según el formulario de la CONEAU */
+export const ANEXOS_UA = ['Anexo 1', 'Anexo 2', 'Anexo 3', 'Anexo 4', 'Anexo 5', 'Anexo 6'];
+export const ANEXOS_CARRERA = ['Anexo 7', 'Anexo 8', 'Anexo 9', 'Anexo 10', 'Informe de seguimiento', 'Otros'];
+export const ORDEN_ANEXOS = [...ANEXOS_UA, ...ANEXOS_CARRERA];
+export const AX = [...ORDEN_ANEXOS, 'Descartar'];
 export const AXC = { 'Anexo 7': 'var(--a7)', 'Anexo 8': 'var(--a8)', 'Anexo 9': 'var(--a9)', 'Anexo 10': 'var(--a10)', 'Informe de seguimiento': 'var(--seg)', 'Otros': 'var(--otros)', 'Descartar': 'var(--desc)' };
 export const AXN = {
+  'Anexo 1': 'Anexo 1 · Estatuto de la Universidad',
+  'Anexo 2': 'Anexo 2 · Normativa institucional de apoyo a la carrera',
+  'Anexo 3': 'Anexo 3 · Convenios específicos vigentes',
+  'Anexo 4': 'Anexo 4 · Requisitos de admisión',
+  'Anexo 5': 'Anexo 5 · Programas de becas',
+  'Anexo 6': 'Anexo 6 · Inmuebles, seguridad e higiene y SIED',
   'Anexo 7': 'Anexo 7 · Normativa relacionada con la carrera',
   'Anexo 8': 'Anexo 8 · Programas, TP, informes de PPS, trabajos finales, exámenes',
   'Anexo 9': 'Anexo 9 · Respaldo de planes y estrategias de mejora',
@@ -31,8 +41,10 @@ export function preprocess(raw) {
     if (s.length) estado = { k: 'sinefecto', t: 'Derogada', by: s };
     else if (m.length) estado = { k: 'modificada', t: 'Modificada', by: m };
     else if (c.length) estado = { k: 'complementada', t: 'Complementada', by: c };
-    const hay = norm([d.numero, d.asunto, d.resumen, (d.miembros || []).join(' '), d.categoria, (d.actividad || []).join(' '), d.archivo, d.evento_resumen].join(' '));
-    return { ...d, estado, hay };
+    // un documento puede servir a más de un anexo: el principal (anexo/categoria) y los adicionales (extra)
+    const anexos = [{ anexo: d.anexo, categoria: d.categoria || '' }, ...(d.extra || [])].filter(x => x.anexo);
+    const hay = norm([d.numero, d.asunto, d.resumen, (d.miembros || []).join(' '), anexos.map(x => x.categoria).join(' '), (d.actividad || []).join(' '), d.archivo, d.evento_resumen].join(' '));
+    return { ...d, estado, hay, anexos };
   });
 }
 
@@ -49,8 +61,8 @@ export const emptyFilters = () => ({ q: '', mode: 'directo', ax: [], cat: [], or
 
 export function passes(d, F, skip = {}) {
   if (!skip.rel && !MODES[F.mode].includes(d.relevancia)) return false;
-  if (!skip.ax && F.ax.length && !F.ax.includes(d.anexo)) return false;
-  if (!skip.cat && F.cat.length && !F.cat.includes(d.anexo + '|' + d.categoria)) return false;
+  if (!skip.ax && F.ax.length && !d.anexos.some(x => F.ax.includes(x.anexo))) return false;
+  if (!skip.cat && F.cat.length && !d.anexos.some(x => F.cat.includes(x.anexo + '|' + x.categoria))) return false;
   if (!skip.org && F.org.length && !F.org.includes(d.organo)) return false;
   if (!skip.tip && F.tip.length && !F.tip.includes(d.tipo)) return false;
   if (F.y0 && (!d.anio || d.anio < +F.y0)) return false;
@@ -83,6 +95,12 @@ export const GRUPOS_LINEAS = [
   { t: 'Escuela, Departamentos y universidad', keys: ['comisiones_asesoras_EICA', 'estructura_EICA', 'regimen_concursos_docentes', 'extension', 'investigacion', 'educacion_distancia'] },
 ];
 export const ANEXO_USO = {
+  'Anexo 1': 'Estatuto de la Universidad: el vigente y, si figuran, el Estatuto Provisorio, sus reformas y la norma que los aprueba.',
+  'Anexo 2': 'Normativa institucional que apoya el funcionamiento de la carrera: instancias de gobierno, comisiones de carrera, selección y permanencia de docentes, ingreso y permanencia de alumnos, subsidios de investigación, posgrado docente y personal de apoyo.',
+  'Anexo 3': 'Copias de los convenios específicos vigentes vinculados con la carrera, tomadas del registro de Citrino.',
+  'Anexo 4': 'Requisitos de admisión de la unidad académica y reglamentos de ingreso.',
+  'Anexo 5': 'Programas que rigen el otorgamiento de becas: adjudicación, duración y obligaciones. No incluye pagos ni adjudicaciones a personas.',
+  'Anexo 6': 'Respaldo de la disponibilidad de inmuebles que no son propiedad de la Universidad, certificaciones de seguridad e higiene y resolución de aprobación del SIED.',
   'Anexo 7': 'Estructura de gestión, plan de estudios y su seguimiento, creación de la carrera, PPS, regularidad, admisión, apoyo académico y demás normativa de la carrera.',
   'Anexo 8': 'Programas analíticos, guías de trabajos prácticos, informes de PPS, trabajos finales y exámenes del último año. Cada archivo debe nombrar su actividad curricular.',
   'Anexo 9': 'Documentación que respalda planes y estrategias de mejora.',
@@ -90,11 +108,11 @@ export const ANEXO_USO = {
   'Informe de seguimiento': 'Seguimiento de los compromisos asumidos en una acreditación anterior.',
   'Otros': 'Designaciones y concursos docentes, equivalencias y títulos individuales, actividades de la Escuela.',
 };
-export const NOMBRE_ANEXO = { 'Anexo 7': 'Anexo 7 · Normativa de la carrera', 'Anexo 8': 'Anexo 8 · Programas, TP, PPS y trabajos finales', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados y seguimiento', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos de ISI' };
+export const NOMBRE_ANEXO = { 'Anexo 1': 'Anexo 1 · Estatuto de la Universidad', 'Anexo 2': 'Anexo 2 · Normativa institucional', 'Anexo 3': 'Anexo 3 · Convenios específicos vigentes', 'Anexo 4': 'Anexo 4 · Requisitos de admisión', 'Anexo 5': 'Anexo 5 · Programas de becas', 'Anexo 6': 'Anexo 6 · Inmuebles, seguridad y SIED', 'Anexo 7': 'Anexo 7 · Normativa de la carrera', 'Anexo 8': 'Anexo 8 · Programas, TP, PPS y trabajos finales', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados y seguimiento', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos de ISI' };
 export const TAB_ANEXO = { 'Anexo 7': 'Anexo 7', 'Anexo 8': 'Anexo 8', 'Anexo 9': 'Anexo 9', 'Anexo 10': 'Anexo 10', 'Informe de seguimiento': 'Seguimiento', 'Otros': 'Otros' };
 
 export function exportCsv(list, name = 'documentos-isi.csv') {
-  const cols = [['Anexo', d => d.anexo], ['Categoría', d => d.categoria], ['Órgano', d => d.organo], ['Tipo', d => d.tipo], ['Número', d => d.numero], ['Fecha', d => d.fecha],
+  const cols = [['Anexos', d => d.anexos.map(a => a.anexo).join('; ')], ['Categorías', d => d.anexos.map(a => a.categoria).filter(Boolean).join('; ')], ['Órgano', d => d.organo], ['Tipo', d => d.tipo], ['Número', d => d.numero], ['Fecha', d => d.fecha],
     ['Asunto', d => d.asunto], ['Estado', d => d.estado.t], ['Actividad curricular', d => (d.actividad || []).join('; ')], ['Resumen', d => d.resumen]];
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const csv = '\ufeff' + [cols.map(c => q(c[0])).join(','), ...list.map(d => cols.map(c => q(c[1](d))).join(','))].join('\r\n');
@@ -115,9 +133,10 @@ export const ESTADOS_CONV = ['Vigente', 'Vencido'];
 export function preprocessConvenios(lista) {
   return lista.map(c => ({ ...c, hay: norm([c.numero, (c.partes || []).map(p => p.nombre).join(' '), c.objeto, c.resumen, c.aporte, c.categoria, c.expediente, c.tipo, c.firmante_ext].join(' ')) }));
 }
-export const emptyConv = () => ({ modo: 'sugeridos', cat: [], tipo: [], estado: [], parte: [], valor: [], y0: '', y1: '' });
+export const emptyConv = () => ({ modo: 'sugeridos', anexo: [], cat: [], tipo: [], estado: [], parte: [], valor: [], y0: '', y1: '' });
 export function passesConv(c, F, CF, skip = {}) {
   if (!skip.modo && CF.modo === 'sugeridos' && c.relevancia === 'baja') return false;
+  if (!skip.anexo && CF.anexo.length && !(c.anexos || []).some(a => CF.anexo.includes(a))) return false;
   if (!skip.cat && CF.cat.length && !CF.cat.includes(c.categoria)) return false;
   if (!skip.tipo && CF.tipo.length && !CF.tipo.includes(c.tipo)) return false;
   if (!skip.estado && CF.estado.length && !CF.estado.includes(c.estado)) return false;
@@ -137,4 +156,4 @@ export function exportConveniosCsv(list, name = 'convenios-isi.csv') {
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
 
-export const SIDE_NAME ={ 'Anexo 7': 'Anexo 7 · Normativa', 'Anexo 8': 'Anexo 8 · Programas y PPS', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos' };
+export const SIDE_NAME = { 'Anexo 1': 'Anexo 1 · Estatuto', 'Anexo 2': 'Anexo 2 · Normativa institucional', 'Anexo 3': 'Anexo 3 · Convenios vigentes', 'Anexo 4': 'Anexo 4 · Admisión', 'Anexo 5': 'Anexo 5 · Becas', 'Anexo 6': 'Anexo 6 · Inmuebles y SIED', 'Anexo 7': 'Anexo 7 · Normativa', 'Anexo 8': 'Anexo 8 · Programas y PPS', 'Anexo 9': 'Anexo 9 · Planes de mejora', 'Anexo 10': 'Anexo 10 · Resultados', 'Informe de seguimiento': 'Informe de seguimiento', 'Otros': 'Otros documentos' };
