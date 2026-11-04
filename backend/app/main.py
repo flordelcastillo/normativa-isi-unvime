@@ -30,6 +30,11 @@ class Ref(BaseModel):
     to: list[str] = []
 
 
+class Extra(BaseModel):
+    anexo: Literal[tuple(config.ANEXOS)]  # type: ignore
+    categoria: str = Field(default="", max_length=200)
+
+
 class DocIn(BaseModel):
     numero: str = Field(default="", max_length=80)
     fecha: str = Field(default="", pattern=r"^(\d{2}/\d{2}/\d{4})?$")
@@ -49,6 +54,7 @@ class DocIn(BaseModel):
     refs: list[Ref] = []
     archivo: str = Field(default="", max_length=250)
     motivo: str = Field(default="", max_length=300)
+    extra: list[Extra] = []
 
 
 def _normalize(m: DocIn) -> dict:

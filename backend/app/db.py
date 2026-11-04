@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 
 from .config import DATA_DIR, DB_PATH, PDF_DIR
 
-JSON_COLS = ("actividad", "lineas", "miembros", "refs")
+JSON_COLS = ("actividad", "lineas", "miembros", "refs", "extra")
 COLS = ["id", "numero", "fecha", "iso", "organo", "tipo", "anexo", "categoria", "relevancia", "actividad", "lineas", "evento_tipo",
-        "evento_resumen", "asunto", "resumen", "miembros", "vigencia", "refs", "archivo", "calidad", "motivo", "origen", "creado", "externo", "pdf_url"]
+        "evento_resumen", "asunto", "resumen", "miembros", "vigencia", "refs", "archivo", "calidad", "motivo", "origen", "creado", "externo", "pdf_url", "extra"]
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS docs (
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS docs (
   asunto TEXT NOT NULL DEFAULT '', resumen TEXT NOT NULL DEFAULT '', miembros TEXT NOT NULL DEFAULT '[]', vigencia TEXT NOT NULL DEFAULT '',
   refs TEXT NOT NULL DEFAULT '[]', archivo TEXT NOT NULL DEFAULT '', calidad TEXT NOT NULL DEFAULT '', motivo TEXT NOT NULL DEFAULT '',
   origen TEXT NOT NULL DEFAULT 'digesto', creado TEXT NOT NULL DEFAULT '',
-  externo INTEGER NOT NULL DEFAULT 0, pdf_url TEXT NOT NULL DEFAULT ''
+  externo INTEGER NOT NULL DEFAULT 0, pdf_url TEXT NOT NULL DEFAULT '', extra TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS idx_docs_anexo ON docs(anexo);
 CREATE INDEX IF NOT EXISTS idx_docs_iso ON docs(iso);
@@ -31,7 +31,7 @@ def init():
         c.executescript(SCHEMA)
         # bases creadas antes de existir las columnas de documentos externos
         cols = {r["name"] for r in c.execute("PRAGMA table_info(docs)")}
-        for nombre, ddl in (("externo", "INTEGER NOT NULL DEFAULT 0"), ("pdf_url", "TEXT NOT NULL DEFAULT ''")):
+        for nombre, ddl in (("externo", "INTEGER NOT NULL DEFAULT 0"), ("pdf_url", "TEXT NOT NULL DEFAULT ''"), ("extra", "TEXT NOT NULL DEFAULT '[]'")):
             if nombre not in cols:
                 c.execute(f"ALTER TABLE docs ADD COLUMN {nombre} {ddl}")
 

@@ -19,6 +19,8 @@ import re
 import shutil
 import subprocess
 import sys
+import time
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
@@ -27,7 +29,7 @@ from app import config  # noqa: E402
 # --- criterios de publicación (ajustar acá) ---
 EXCLUIR_RELEVANCIA = {"nula"}
 EXCLUIR_CATEGORIAS = {"Equivalencias individuales", "Expedición de títulos"}
-ANEXOS_CON_PDF = {"Anexo 7", "Anexo 8", "Anexo 9", "Anexo 10", "Informe de seguimiento"}
+ANEXOS_CON_PDF = {"Anexo 1", "Anexo 2", "Anexo 4", "Anexo 5", "Anexo 6", "Anexo 7", "Anexo 8", "Anexo 9", "Anexo 10", "Informe de seguimiento"}
 DIGESTO = "https://digesto.unvime.edu.ar/digesto/index.php?view=desktop&task=download&format=raw&uuid={id}&id=1"
 
 DNI = re.compile(r"\(?\s*\bD\.?\s?N\.?\s?I\.?\s*(?:N[º°o]\.?|:)?\s*\d[\d.\s]{5,11}\d\s*\)?", re.I)
@@ -73,15 +75,35 @@ def comprimir(origen: Path, destino: Path):
     shutil.copy2(origen, destino)
 
 
+def buscar_pdf(doc_id, carpetas):
+    """Busca el PDF en las carpetas dadas; si no está, lo baja del digesto a la última."""
+    for c in carpetas:
+        p = c / f"{doc_id}.pdf"
+        if p.exists() and p.stat().st_size > 1000:
+            return p
+    destino = carpetas[-1] / f"{doc_id}.pdf"
+    for _ in range(3):
+        try:
+            datos = urllib.request.urlopen(DIGESTO.format(id=doc_id), timeout=120).read()
+            if datos[:4] == b"%PDF":
+                destino.write_bytes(datos)
+                return destino
+        except OSError:
+            time.sleep(2)
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", required=True, help="data.js del relevamiento completo")
-    ap.add_argument("--pdfs", required=True, help="carpeta con los PDF originales (<id>.pdf)")
+    ap.add_argument("--source", required=True, help="relevamiento completo: data.js o un .json con {\"docs\": [...]}")
+    ap.add_argument("--pdfs", required=True, help="carpetas con los PDF originales (<id>.pdf), separadas por coma; los que falten se bajan del digesto a la última")
+    ap.add_argument("--rehacer", action="store_true", help="vuelve a comprimir los PDF que ya están en la carpeta de salida")
     ap.add_argument("--out", required=True, help="carpeta public del frontend")
     ap.add_argument("--solo-datos", action="store_true", help="regenera los JSON sin volver a procesar los PDF")
     a = ap.parse_args()
     crudo = Path(a.source).read_text(encoding="utf-8")
-    docs = json.loads(crudo[crudo.index("=") + 1:].strip().rstrip(";"))["docs"]
+    docs = json.loads(crudo if crudo.lstrip().startswith(("{", "[")) else crudo[crudo.index("=") + 1:].strip().rstrip(";"))
+    docs = docs["docs"] if isinstance(docs, dict) else docs
 
     publicos = [d for d in docs if d["relevancia"] not in EXCLUIR_RELEVANCIA and d["categoria"] not in EXCLUIR_CATEGORIAS]
     ids = {d["id"] for d in publicos}
@@ -96,7 +118,8 @@ def main():
         d["miembros"] = [m for m in (limpiar(m) for m in d.get("miembros", [])) if m]
         d["refs"] = [{"cita": limpiar(r["cita"]), "rel": r["rel"], "dice": limpiar(r.get("dice", "")), "to": [t for t in r.get("to", []) if t in ids]} for r in d.get("refs", [])]
         d["archivo"] = ""                                   # los nombres de archivo del digesto pueden incluir nombres de personas
-        d["externo"] = d["anexo"] not in ANEXOS_CON_PDF
+        d["extra"] = [e for e in d.get("extra", []) if e.get("anexo")]
+        d["externo"] = not ({d["anexo"]} | {e["anexo"] for e in d["extra"]}) & ANEXOS_CON_PDF
         d["pdf"] = DIGESTO.format(id=d["id"]) if d["externo"] else f"pdfs/{d['id']}.pdf"
         d.pop("inn", None)
         final.append(d)
@@ -116,10 +139,14 @@ def main():
         con_pdf_proc = []
     else:
         con_pdf_proc = con_pdf
+    carpetas = [Path(c) for c in a.pdfs.split(",")]
     antes = despues = 0
     for i, d in enumerate(con_pdf_proc, 1):
-        o, dst = Path(a.pdfs) / f"{d['id']}.pdf", out / "pdfs" / f"{d['id']}.pdf"
-        if not o.exists():
+        dst = out / "pdfs" / f"{d['id']}.pdf"
+        if dst.exists() and not a.rehacer:
+            continue
+        o = buscar_pdf(d["id"], carpetas)
+        if o is None:
             print("falta el PDF de", d["numero"], file=sys.stderr)
             continue
         comprimir(o, dst)
